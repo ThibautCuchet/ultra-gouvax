@@ -1,37 +1,16 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import type { WayPoint } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
-  try {
-    const csvPath = path.join(
-      process.cwd(),
-      "src/ressources/Coordonn_es_avec_RAVITO_4.csv"
-    );
-    const csvContent = await fs.readFile(csvPath, "utf-8");
-
-    const lines = csvContent.trim().split("\n");
-
-    const waypoints: WayPoint[] = lines.slice(1).map((line) => {
-      const values = line.split(",");
-      const name = values[1];
-
-      return {
-        km: Number.parseFloat(values[0]),
-        name: name.replace(/"/g, ""), // Remove quotes
-        lat: Number.parseFloat(values[2]),
-        lng: Number.parseFloat(values[3]),
-        isRavito: name.toLowerCase().includes("ravito"),
-      };
-    });
-
-    return NextResponse.json(waypoints);
-  } catch (error) {
-    console.error("Error reading CSV file:", error);
+  const { data, error } = await supabase.from("waypoints").select("*");
+  if (error) {
+    console.error("Error fetching waypoints:", error);
     return NextResponse.json(
       { error: "Failed to read waypoints data" },
       { status: 500 }
     );
   }
+
+  return NextResponse.json(data as WayPoint[]);
 }

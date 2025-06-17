@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import type { TrackPoint } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(
   request: Request,
@@ -9,58 +8,27 @@ export async function GET(
 ) {
   try {
     const { filename } = await params;
-    const gpxPath = path.join(
-      process.cwd(),
-      "src/ressources",
-      decodeURIComponent(filename)
-    );
-    const gpxContent = await fs.readFile(gpxPath, "utf-8");
+    const decoded = decodeURIComponent(filename);
+    const { data, error } = await supabase
+      .from("trackpoints")
+      .select("lat,lng,elevation,time")
+      .eq("gpx_filename", decoded)
+      .order("id");
 
-    // Simple regex to extract trackpoints from GPX
-    const trkptRegex = /<trkpt lat="([^"]+)" lon="([^"]+)">/g;
-    const eleRegex = /<ele>([^<]+)<\/ele>/g;
-    const timeRegex = /<time>([^<]+)<\/time>/g;
-
-    const trackPoints: TrackPoint[] = [];
-
-    // Extract lat/lng
-    let match: RegExpExecArray | null;
-    const coordinates: Array<{ lat: number; lng: number }> = [];
-
-    match = trkptRegex.exec(gpxContent);
-    while (match !== null) {
-      coordinates.push({
-        lat: Number.parseFloat(match[1]),
-        lng: Number.parseFloat(match[2]),
-      });
-      match = trkptRegex.exec(gpxContent);
+    if (error) {
+      console.error("Error fetching GPX data:", error);
+      return NextResponse.json(
+        { error: "Failed to read GPX data" },
+        { status: 500 }
+      );
     }
 
-    // Extract elevations
-    const elevations: number[] = [];
-    match = eleRegex.exec(gpxContent);
-    while (match !== null) {
-      elevations.push(Number.parseFloat(match[1]));
-      match = eleRegex.exec(gpxContent);
-    }
-
-    // Extract times
-    const times: Date[] = [];
-    match = timeRegex.exec(gpxContent);
-    while (match !== null) {
-      times.push(new Date(match[1]));
-      match = timeRegex.exec(gpxContent);
-    }
-
-    // Combine data
-    for (let i = 0; i < coordinates.length; i++) {
-      trackPoints.push({
-        lat: coordinates[i].lat,
-        lng: coordinates[i].lng,
-        elevation: elevations[i] || undefined,
-        time: times[i] || undefined,
-      });
-    }
+    const trackPoints: TrackPoint[] = (data || []).map((row) => ({
+      lat: row.lat,
+      lng: row.lng,
+      elevation: row.elevation ?? undefined,
+      time: row.time ? new Date(row.time) : undefined,
+    }));
 
     return NextResponse.json(trackPoints);
   } catch (error) {
