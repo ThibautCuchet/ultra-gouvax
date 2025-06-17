@@ -69,8 +69,8 @@ export default function MapComponent({
     });
     markersRef.current = [];
 
-    // Average speed for ETA calculation (km/h)
-    const AVG_SPEED = 12;
+    // Average speed in km/h (approx. 8 min per km)
+    const AVG_SPEED = 7.5;
 
     // Add waypoint markers
     waypoints.forEach((waypoint) => {
