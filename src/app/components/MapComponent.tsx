@@ -5,6 +5,7 @@ import L from "leaflet";
 import type { WayPoint, TrackPoint, LivePosition } from "@/lib/types";
 import { calculateDistance } from "@/lib/dataParser";
 
+<<<<<<< codex/refactor-map-card-interactions-and-markers
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
   return L.divIcon({
@@ -16,6 +17,8 @@ const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
   });
 };
 
+=======
+>>>>>>> main
 interface MapComponentProps {
   waypoints: WayPoint[];
   stageTracks: Map<number, TrackPoint[]>;
