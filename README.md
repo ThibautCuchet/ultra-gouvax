@@ -40,6 +40,8 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 This project stores waypoints and GPX track data in Supabase rather than local files.
 
 1. Create a new Supabase project and copy your API URL and keys.
-2. Update `.env` using `.env.example` as reference.
+2. Update `.env` using `.env.example` as reference. The required
+   variables are `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   and `SUPABASE_SERVICE_ROLE_KEY`.
 3. Run the SQL in `supabase/schema.sql` to create the tables.
 4. Import your CSV and GPX files using `pnpm import:data`.
