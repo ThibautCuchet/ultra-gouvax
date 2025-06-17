@@ -4,22 +4,6 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { WayPoint, TrackPoint, LivePosition } from "@/lib/types";
 
-// Use CDN icons to avoid Next.js SSR issues
-const createIcon = (size: [number, number] = [25, 41]) => {
-  return L.icon({
-    iconUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-    iconRetinaUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-    shadowUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-    iconSize: size,
-    iconAnchor: [size[0] / 2, size[1]],
-    popupAnchor: [1, -size[1] + 10],
-    shadowSize: [41, 41],
-  });
-};
-
 interface MapComponentProps {
   waypoints: WayPoint[];
   stageTracks: Map<number, TrackPoint[]>;

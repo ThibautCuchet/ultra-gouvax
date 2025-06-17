@@ -12,7 +12,6 @@ export async function GET() {
     const csvContent = await fs.readFile(csvPath, "utf-8");
 
     const lines = csvContent.trim().split("\n");
-    const headers = lines[0].split(",");
 
     const waypoints: WayPoint[] = lines.slice(1).map((line) => {
       const values = line.split(",");

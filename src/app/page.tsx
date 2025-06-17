@@ -113,7 +113,7 @@ export default function Home() {
         <footer className="mt-12 text-center text-sm text-muted-foreground border-t pt-8">
           <p>
             🚀 Application de suivi ultra créée avec Next.js, Leaflet et
-            beaucoup d'amour
+            beaucoup d&apos;amour
           </p>
           <p className="mt-2">💪 Allez Charles ! Tu peux le faire !</p>
         </footer>
