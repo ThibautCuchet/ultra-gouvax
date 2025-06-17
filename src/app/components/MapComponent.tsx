@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { WayPoint, TrackPoint, LivePosition } from "@/lib/types";
-import { calculateDistance } from "@/lib/dataParser";
+import { calculateDistance } from "@/lib/calculate";
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -25,7 +25,6 @@ interface MapComponentProps {
 export default function MapComponent({
   waypoints,
   stageTracks,
-  livePosition,
 }: MapComponentProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -58,82 +57,6 @@ export default function MapComponent({
       }
     };
   }, []);
-
-  // Update markers when waypoints change
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    // Clear existing markers
-    markersRef.current.forEach((marker) => {
-      mapRef.current?.removeLayer(marker);
-    });
-    markersRef.current = [];
-
-    // Average speed in km/h (approx. 8 min per km)
-    const AVG_SPEED = 7.5;
-
-    // Add waypoint markers
-    waypoints.forEach((waypoint) => {
-      const icon = waypoint.isRavito
-        ? createEmojiIcon("🥤", [28, 28])
-        : createEmojiIcon("📍", [24, 24]);
-
-      let popupContent = `<div class="p-2">`;
-      popupContent += `<h3 class="font-semibold ${
-        waypoint.isRavito ? "text-red-600" : "text-blue-600"
-      }">${waypoint.name}</h3>`;
-      popupContent += `<p class="text-sm text-gray-600">Km ${waypoint.km} ${
-        waypoint.isRavito ? "🥤 RAVITO" : "📍"
-      }</p>`;
-
-      if (livePosition) {
-        const distance = calculateDistance(
-          livePosition.lat,
-          livePosition.lng,
-          waypoint.lat,
-          waypoint.lng
-        );
-        const eta = new Date(
-          livePosition.timestamp.getTime() + (distance / AVG_SPEED) * 3600000
-        );
-        popupContent += `<p class="text-sm mt-1">ETA: ${eta.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</p>`;
-      }
-
-      const googleLink = `https://www.google.com/maps/dir/?api=1&destination=${waypoint.lat},${waypoint.lng}`;
-      const wazeLink = `https://www.waze.com/ul?ll=${waypoint.lat},${waypoint.lng}&navigate=yes`;
-      popupContent += `<div class="flex gap-2 mt-2 text-sm"><a href="${googleLink}" target="_blank" rel="noopener" class="underline">Google Maps</a><a href="${wazeLink}" target="_blank" rel="noopener" class="underline">Waze</a></div>`;
-      popupContent += `</div>`;
-
-      const marker = L.marker([waypoint.lat, waypoint.lng], { icon })
-        .bindPopup(popupContent)
-        .addTo(mapRef.current!);
-
-      markersRef.current.push(marker);
-    });
-
-    // Add live position marker if available
-    if (livePosition) {
-      const liveIcon = createEmojiIcon("🏃", [30, 30]);
-      const googleLink = `https://www.google.com/maps/dir/?api=1&destination=${livePosition.lat},${livePosition.lng}`;
-      const wazeLink = `https://www.waze.com/ul?ll=${livePosition.lat},${livePosition.lng}&navigate=yes`;
-      const popup = `
-          <div class="p-2">
-            <h3 class="font-semibold text-green-600">🏃 Charles</h3>
-            <p class="text-sm text-gray-600">Position actuelle</p>
-            ${livePosition.speed ? `<p class="text-sm">Vitesse: ${livePosition.speed.toFixed(1)} km/h</p>` : ""}
-            <div class="flex gap-2 mt-2 text-sm"><a href="${googleLink}" target="_blank" rel="noopener" class="underline">Google Maps</a><a href="${wazeLink}" target="_blank" rel="noopener" class="underline">Waze</a></div>
-          </div>
-        `;
-
-      const liveMarker = L.marker([livePosition.lat, livePosition.lng], {
-        icon: liveIcon,
-      })
-        .bindPopup(popup)
-        .addTo(mapRef.current!);
-
-      markersRef.current.push(liveMarker);
-    }
-  }, [waypoints, livePosition]);
 
   // Update polylines when stage tracks change
   useEffect(() => {

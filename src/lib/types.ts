@@ -16,7 +16,7 @@ export interface WayPoint {
   name: string;
   lat: number;
   lng: number;
-  isRavito: boolean;
+  is_ravito: boolean;
 }
 
 export interface TrackPoint {

@@ -5,70 +5,19 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { WayPoint, LivePosition, ETACalculation } from "@/lib/types";
 import { STAGES } from "@/lib/types";
-import { calculateDistance } from "@/lib/dataParser";
+import { calculateDistance } from "@/lib/calculate";
 
 interface UltraStatsProps {
   waypoints: WayPoint[];
-  livePosition?: LivePosition;
 }
 
-export default function UltraStats({
-  waypoints,
-  livePosition,
-}: UltraStatsProps) {
+export default function UltraStats({ waypoints }: UltraStatsProps) {
   const [etas, setEtas] = useState<ETACalculation[]>([]);
   const [totalProgress, setTotalProgress] = useState<number>(0);
 
-  useEffect(() => {
-    if (!livePosition || waypoints.length === 0) return;
-
-    // Calculate ETAs based on average speed and current position
-    const avgSpeed = 12; // km/h - can be dynamic based on actual speed
-    const newEtas: ETACalculation[] = [];
-
-    for (const waypoint of waypoints) {
-      const distance = calculateDistance(
-        livePosition.lat,
-        livePosition.lng,
-        waypoint.lat,
-        waypoint.lng
-      );
-
-      const timeToReach = distance / avgSpeed; // hours
-      const eta = new Date(
-        livePosition.timestamp.getTime() + timeToReach * 60 * 60 * 1000
-      );
-
-      newEtas.push({
-        waypoint,
-        eta,
-        distance,
-        progress: Math.max(0, 100 - (distance / 150) * 100), // Rough progress calculation
-      });
-    }
-
-    setEtas(newEtas);
-
-    // Calculate total progress (rough estimate)
-    const totalDistance = 150; // km
-    const distanceFromStart = calculateDistance(
-      STAGES[0].startCoords[0],
-      STAGES[0].startCoords[1],
-      livePosition.lat,
-      livePosition.lng
-    );
-    setTotalProgress(Math.min(100, (distanceFromStart / totalDistance) * 100));
-  }, [livePosition, waypoints]);
-
-  const ravitoPoints = waypoints.filter((wp) => wp.isRavito);
+  const ravitoPoints = waypoints.filter((wp) => wp.is_ravito);
   const nextRavito = ravitoPoints.find((wp) => {
-    if (!livePosition) return true;
-    const distance = calculateDistance(
-      livePosition.lat,
-      livePosition.lng,
-      wp.lat,
-      wp.lng
-    );
+    const distance = calculateDistance(wp.lat, wp.lng, wp.lat, wp.lng);
     return distance > 0.5; // Next ravito is more than 500m away
   });
 
@@ -92,23 +41,6 @@ export default function UltraStats({
               />
             </div>
           </div>
-
-          {livePosition && (
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Position:</span>
-                <div className="font-mono">
-                  {livePosition.lat.toFixed(5)}, {livePosition.lng.toFixed(5)}
-                </div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Dernière maj:</span>
-                <div>
-                  {format(livePosition.timestamp, "HH:mm:ss", { locale: fr })}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -151,18 +83,6 @@ export default function UltraStats({
             <div className="text-sm text-muted-foreground">
               Km {nextRavito.km}
             </div>
-            {livePosition && (
-              <div className="text-sm">
-                Distance:{" "}
-                {calculateDistance(
-                  livePosition.lat,
-                  livePosition.lng,
-                  nextRavito.lat,
-                  nextRavito.lng
-                ).toFixed(1)}{" "}
-                km
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -173,7 +93,7 @@ export default function UltraStats({
           <h3 className="text-lg font-semibold mb-4">⏰ ETAs Ravitos</h3>
           <div className="space-y-2">
             {etas
-              .filter((eta) => eta.waypoint.isRavito)
+              .filter((eta) => eta.waypoint.is_ravito)
               .slice(0, 3)
               .map((eta) => (
                 <div

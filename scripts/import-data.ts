@@ -1,30 +1,30 @@
-import { createClient } from '@supabase/supabase-js';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { STAGES, WayPoint, TrackPoint } from '../src/lib/types';
+import { createClient } from "@supabase/supabase-js";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { STAGES, type WayPoint, type TrackPoint } from "../src/lib/types";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const supabase = createClient(supabaseUrl, serviceKey);
 
 async function parseWaypoints(filePath: string): Promise<WayPoint[]> {
-  const csvContent = await fs.readFile(filePath, 'utf-8');
-  const lines = csvContent.trim().split('\n');
+  const csvContent = await fs.readFile(filePath, "utf-8");
+  const lines = csvContent.trim().split("\n");
   return lines.slice(1).map((line) => {
-    const values = line.split(',');
+    const values = line.split(",");
     const name = values[1];
     return {
       km: Number.parseFloat(values[0]),
-      name: name.replace(/"/g, ''),
+      name: name.replace(/"/g, ""),
       lat: Number.parseFloat(values[2]),
       lng: Number.parseFloat(values[3]),
-      isRavito: name.toLowerCase().includes('ravito'),
+      is_ravito: name.toLowerCase().includes("ravito"),
     };
   });
 }
 
 async function parseGPX(filePath: string): Promise<TrackPoint[]> {
-  const gpxContent = await fs.readFile(filePath, 'utf-8');
+  const gpxContent = await fs.readFile(filePath, "utf-8");
   const trkptRegex = /<trkpt lat="([^"]+)" lon="([^"]+)">/g;
   const eleRegex = /<ele>([^<]+)<\/ele>/g;
   const timeRegex = /<time>([^<]+)<\/time>/g;
@@ -66,19 +66,23 @@ async function parseGPX(filePath: string): Promise<TrackPoint[]> {
 }
 
 async function importWaypoints() {
-  const csvPath = path.join('src', 'ressources', 'Coordonn_es_avec_RAVITO_4.csv');
+  const csvPath = path.join(
+    "src",
+    "ressources",
+    "Coordonn_es_avec_RAVITO_4.csv"
+  );
   const waypoints = await parseWaypoints(csvPath);
-  await supabase.from('waypoints').insert(waypoints);
+  await supabase.from("waypoints").insert(waypoints);
 }
 
 async function importTracks() {
-  const base = path.join('src', 'ressources');
+  const base = path.join("src", "ressources");
   for (const stage of STAGES) {
     const filePath = path.join(base, stage.gpxFile);
     const points = await parseGPX(filePath);
     const rows = points.map((p) => ({ ...p, gpx_filename: stage.gpxFile }));
     if (rows.length > 0) {
-      await supabase.from('trackpoints').insert(rows);
+      await supabase.from("trackpoints").insert(rows);
     }
   }
 }

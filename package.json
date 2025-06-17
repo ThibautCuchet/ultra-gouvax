@@ -10,6 +10,7 @@
     "import:data": "ts-node scripts/import-data.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.6.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
