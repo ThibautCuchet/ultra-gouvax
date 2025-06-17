@@ -1,33 +1,18 @@
-import type { WayPoint, TrackPoint } from "./types";
 import { createClient } from "./supabase.server";
+import { Step } from "./database.types";
 
-export async function getWaypoints(): Promise<WayPoint[]> {
+export async function getData() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("waypoints").select("*");
-  if (error) {
-    console.error("Error fetching waypoints:", error);
-    return [];
-  }
-  return (data ?? []) as WayPoint[];
-}
 
-export async function getTrackPoints(filename: string): Promise<TrackPoint[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("trackpoints")
-    .select("lat,lng,elevation,time")
-    .eq("gpx_filename", filename)
-    .order("id");
+  const [waypoints, steps, trackpoints] = await Promise.all([
+    supabase.from("waypoints").select("*"),
+    supabase.from("steps").select("*"),
+    supabase.from("trackpoints").select("*"),
+  ]);
 
-  if (error) {
-    console.error("Error fetching GPX data:", error);
-    return [];
-  }
-
-  return (data ?? []).map((row) => ({
-    lat: row.lat,
-    lng: row.lng,
-    elevation: row.elevation ?? undefined,
-    time: row.time ? new Date(row.time) : undefined,
-  }));
+  return {
+    waypoints: waypoints.data ?? [],
+    steps: steps.data ?? [],
+    trackpoints: trackpoints.data ?? [],
+  };
 }

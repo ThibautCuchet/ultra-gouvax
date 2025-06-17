@@ -1,12 +1,28 @@
-import UltraMap from "./components/UltraMap";
+import { Step, Trackpoint, Waypoint } from "@/lib/database.types";
+import UltraMap from "./components/UltaMap";
 import UltraStats from "./components/UltraStats";
-import type { WayPoint, LivePosition } from "@/lib/types";
 
 interface HomeClientProps {
-  waypoints: WayPoint[];
+  waypoints: Waypoint[];
+  steps: Step[];
+  trackpoints: Trackpoint[];
 }
 
-export default function HomeClient({ waypoints }: HomeClientProps) {
+export default function HomeClient({
+  waypoints,
+  steps,
+  trackpoints,
+}: HomeClientProps) {
+  const totalDistance = steps.reduce(
+    (acc, step) => acc + (step.distance_km ?? 0),
+    0
+  );
+
+  const totalElevation = steps.reduce(
+    (acc, step) => acc + (step.elevation_gain_m ?? 0),
+    0
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -18,10 +34,9 @@ export default function HomeClient({ waypoints }: HomeClientProps) {
             Suivi en temps réel de Charles
           </p>
           <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
-            <div>📍 150 km</div>
-            <div>⛰️ 2030m D+</div>
-            <div>🕒 6 étapes</div>
-            <div>🥤 4 ravitos</div>
+            <div>📍 {totalDistance.toFixed(2)} km</div>
+            <div>⛰️ {totalElevation.toFixed(0)}m D+</div>
+            <div>🕒 {steps.length} étapes</div>
           </div>
         </header>
 
@@ -31,7 +46,9 @@ export default function HomeClient({ waypoints }: HomeClientProps) {
               <h2 className="text-2xl font-semibold mb-4">
                 🗺️ Carte en temps réel
               </h2>
-              <UltraMap waypoints={waypoints} />
+              <div className="h-96 w-full rounded-lg overflow-hidden border">
+                <UltraMap waypoints={waypoints} trackpoints={trackpoints} />
+              </div>
             </div>
           </div>
           <div className="lg:col-span-1">

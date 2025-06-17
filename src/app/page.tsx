@@ -1,7 +1,10 @@
 import HomeClient from "./HomeClient";
-import { getWaypoints } from "@/lib/dataParser";
+import { getData } from "@/lib/dataParser";
 
 export default async function Home() {
-  const waypoints = await getWaypoints();
-  return <HomeClient waypoints={waypoints} />;
+  const { waypoints, steps, trackpoints } = await getData();
+
+  return (
+    <HomeClient waypoints={waypoints} steps={steps} trackpoints={trackpoints} />
+  );
 }

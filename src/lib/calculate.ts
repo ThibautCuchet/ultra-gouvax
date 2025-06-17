@@ -1,4 +1,4 @@
-import { TrackPoint } from "./types";
+import { Trackpoint } from "./database.types";
 
 // Utility to calculate distance between two points (Haversine formula)
 export function calculateDistance(
@@ -23,8 +23,8 @@ export function calculateDistance(
 // Find closest point on track to a given position
 export function findClosestTrackPoint(
   position: { lat: number; lng: number },
-  track: TrackPoint[]
-): { point: TrackPoint; index: number; distance: number } | null {
+  track: Trackpoint[]
+): { point: Trackpoint; index: number; distance: number } | null {
   if (track.length === 0) return null;
 
   let closestPoint = track[0];
@@ -32,16 +32,16 @@ export function findClosestTrackPoint(
   let minDistance = calculateDistance(
     position.lat,
     position.lng,
-    track[0].lat,
-    track[0].lng
+    track[0].lat ?? 0,
+    track[0].lng ?? 0
   );
 
   for (let i = 1; i < track.length; i++) {
     const distance = calculateDistance(
       position.lat,
       position.lng,
-      track[i].lat,
-      track[i].lng
+      track[i].lat ?? 0,
+      track[i].lng ?? 0
     );
     if (distance < minDistance) {
       minDistance = distance;
