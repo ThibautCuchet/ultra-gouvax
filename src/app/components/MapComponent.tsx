@@ -18,7 +18,7 @@ const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
 
 interface MapComponentProps {
   waypoints: WayPoint[];
-  stageTracks: Map<number, TrackPoint[]>;
+  stageTracks: Record<number, TrackPoint[]>;
   livePosition?: LivePosition;
 }
 
@@ -155,7 +155,8 @@ export default function MapComponent({
     ];
 
     // Add stage tracks
-    Array.from(stageTracks.entries()).forEach(([stageId, track]) => {
+    Object.entries(stageTracks).forEach(([id, track]) => {
+      const stageId = Number(id);
       if (track.length > 0) {
         const polyline = L.polyline(
           track.map((point) => [point.lat, point.lng]),
