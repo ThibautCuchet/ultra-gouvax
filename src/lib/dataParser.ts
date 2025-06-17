@@ -1,25 +1,33 @@
 import type { WayPoint, TrackPoint } from "./types";
+import { supabase } from "./supabase";
 
-export async function parseCSVData(): Promise<WayPoint[]> {
-  try {
-    const response = await fetch("/api/waypoints");
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error parsing CSV data:", error);
+export async function getWaypoints(): Promise<WayPoint[]> {
+  const { data, error } = await supabase.from("waypoints").select("*");
+  if (error) {
+    console.error("Error fetching waypoints:", error);
     return [];
   }
+  return (data ?? []) as WayPoint[];
 }
 
-export async function parseGPXData(filename: string): Promise<TrackPoint[]> {
-  try {
-    const response = await fetch(`/api/gpx/${encodeURIComponent(filename)}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error parsing GPX data:", error);
+export async function getTrackPoints(filename: string): Promise<TrackPoint[]> {
+  const { data, error } = await supabase
+    .from("trackpoints")
+    .select("lat,lng,elevation,time")
+    .eq("gpx_filename", filename)
+    .order("id");
+
+  if (error) {
+    console.error("Error fetching GPX data:", error);
     return [];
   }
+
+  return (data ?? []).map((row) => ({
+    lat: row.lat,
+    lng: row.lng,
+    elevation: row.elevation ?? undefined,
+    time: row.time ? new Date(row.time) : undefined,
+  }));
 }
 
 // Utility to calculate distance between two points (Haversine formula)
