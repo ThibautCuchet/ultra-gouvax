@@ -3,6 +3,18 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { WayPoint, TrackPoint, LivePosition } from "@/lib/types";
+import { calculateDistance } from "@/lib/dataParser";
+
+// Simple emoji based icon generator
+const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
+  return L.divIcon({
+    html: `<div style="font-size:${size[0]}px;">${emoji}</div>`,
+    iconSize: size,
+    className: "",
+    iconAnchor: [size[0] / 2, size[1] / 2],
+    popupAnchor: [0, -size[1] / 2],
+  });
+};
 
 interface MapComponentProps {
   waypoints: WayPoint[];
@@ -57,42 +69,43 @@ export default function MapComponent({
     });
     markersRef.current = [];
 
-    // Create icon
-    const createIcon = (size: [number, number] = [25, 41]) => {
-      return L.icon({
-        iconUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-        iconRetinaUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-        shadowUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-        iconSize: size,
-        iconAnchor: [size[0] / 2, size[1]],
-        popupAnchor: [1, -size[1] + 10],
-        shadowSize: [41, 41],
-      });
-    };
+    // Average speed in km/h (approx. 8 min per km)
+    const AVG_SPEED = 7.5;
 
     // Add waypoint markers
     waypoints.forEach((waypoint) => {
       const icon = waypoint.isRavito
-        ? createIcon([30, 49])
-        : createIcon([20, 32]);
+        ? createEmojiIcon("🥤", [28, 28])
+        : createEmojiIcon("📍", [24, 24]);
+
+      let popupContent = `<div class="p-2">`;
+      popupContent += `<h3 class="font-semibold ${
+        waypoint.isRavito ? "text-red-600" : "text-blue-600"
+      }">${waypoint.name}</h3>`;
+      popupContent += `<p class="text-sm text-gray-600">Km ${waypoint.km} ${
+        waypoint.isRavito ? "🥤 RAVITO" : "📍"
+      }</p>`;
+
+      if (livePosition) {
+        const distance = calculateDistance(
+          livePosition.lat,
+          livePosition.lng,
+          waypoint.lat,
+          waypoint.lng
+        );
+        const eta = new Date(
+          livePosition.timestamp.getTime() + (distance / AVG_SPEED) * 3600000
+        );
+        popupContent += `<p class="text-sm mt-1">ETA: ${eta.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</p>`;
+      }
+
+      const googleLink = `https://www.google.com/maps/dir/?api=1&destination=${waypoint.lat},${waypoint.lng}`;
+      const wazeLink = `https://www.waze.com/ul?ll=${waypoint.lat},${waypoint.lng}&navigate=yes`;
+      popupContent += `<div class="flex gap-2 mt-2 text-sm"><a href="${googleLink}" target="_blank" rel="noopener" class="underline">Google Maps</a><a href="${wazeLink}" target="_blank" rel="noopener" class="underline">Waze</a></div>`;
+      popupContent += `</div>`;
+
       const marker = L.marker([waypoint.lat, waypoint.lng], { icon })
-        .bindPopup(
-          `
-          <div class="p-2">
-            <h3 class="font-semibold ${
-              waypoint.isRavito ? "text-red-600" : "text-blue-600"
-            }">
-              ${waypoint.name}
-            </h3>
-            <p class="text-sm text-gray-600">
-              Km ${waypoint.km} ${waypoint.isRavito ? "🥤 RAVITO" : "📍"}
-            </p>
-          </div>
-        `
-        )
+        .bindPopup(popupContent)
         .addTo(mapRef.current!);
 
       markersRef.current.push(marker);
@@ -100,25 +113,22 @@ export default function MapComponent({
 
     // Add live position marker if available
     if (livePosition) {
-      const liveIcon = createIcon([35, 57]);
+      const liveIcon = createEmojiIcon("🏃", [30, 30]);
+      const googleLink = `https://www.google.com/maps/dir/?api=1&destination=${livePosition.lat},${livePosition.lng}`;
+      const wazeLink = `https://www.waze.com/ul?ll=${livePosition.lat},${livePosition.lng}&navigate=yes`;
+      const popup = `
+          <div class="p-2">
+            <h3 class="font-semibold text-green-600">🏃 Charles</h3>
+            <p class="text-sm text-gray-600">Position actuelle</p>
+            ${livePosition.speed ? `<p class="text-sm">Vitesse: ${livePosition.speed.toFixed(1)} km/h</p>` : ""}
+            <div class="flex gap-2 mt-2 text-sm"><a href="${googleLink}" target="_blank" rel="noopener" class="underline">Google Maps</a><a href="${wazeLink}" target="_blank" rel="noopener" class="underline">Waze</a></div>
+          </div>
+        `;
+
       const liveMarker = L.marker([livePosition.lat, livePosition.lng], {
         icon: liveIcon,
       })
-        .bindPopup(
-          `
-          <div class="p-2">
-            <h3 class="font-semibold text-green-600">📍 Charles</h3>
-            <p class="text-sm text-gray-600">Position actuelle</p>
-            ${
-              livePosition.speed
-                ? `<p class="text-sm">Vitesse: ${livePosition.speed.toFixed(
-                    1
-                  )} km/h</p>`
-                : ""
-            }
-          </div>
-        `
-        )
+        .bindPopup(popup)
         .addTo(mapRef.current!);
 
       markersRef.current.push(liveMarker);
