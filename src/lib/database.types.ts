@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      live_track_config: {
+        Row: {
+          created_at: string | null;
+          id: number;
+          is_active: boolean | null;
+          live_track_url: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: number;
+          is_active?: boolean | null;
+          live_track_url?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: number;
+          is_active?: boolean | null;
+          live_track_url?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       steps: {
         Row: {
           created_at: string | null;
@@ -242,6 +266,7 @@ export const Constants = {
     Enums: {},
   },
 } as const;
+
 // Helper types pour simplifier l'utilisation
 export type Waypoint = Database["public"]["Tables"]["waypoints"]["Row"];
 export type WaypointInsert =
@@ -258,3 +283,10 @@ export type TrackpointUpdate =
 export type Step = Database["public"]["Tables"]["steps"]["Row"];
 export type StepInsert = Database["public"]["Tables"]["steps"]["Insert"];
 export type StepUpdate = Database["public"]["Tables"]["steps"]["Update"];
+
+export type LiveTrackConfig =
+  Database["public"]["Tables"]["live_track_config"]["Row"];
+export type LiveTrackConfigInsert =
+  Database["public"]["Tables"]["live_track_config"]["Insert"];
+export type LiveTrackConfigUpdate =
+  Database["public"]["Tables"]["live_track_config"]["Update"];

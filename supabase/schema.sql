@@ -33,3 +33,17 @@ create table if not exists steps (
   gpx_file_key text not null,
   created_at timestamptz default now()
 );
+
+-- Table storing live tracking configuration
+create table if not exists live_track_config (
+  id serial primary key,
+  live_track_url text,
+  is_active boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Insert a default configuration row
+insert into live_track_config (live_track_url, is_active) 
+values (null, false) 
+on conflict do nothing;

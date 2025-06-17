@@ -9,18 +9,7 @@ interface UltraStatsProps {
 }
 
 export default function UltraStats({ waypoints }: UltraStatsProps) {
-  const [totalProgress, setTotalProgress] = useState<number>(0);
-
-  const ravitoPoints = waypoints.filter((wp) => wp.is_ravito);
-  const nextRavito = ravitoPoints.find((wp) => {
-    const distance = calculateDistance(
-      wp.lat ?? 0,
-      wp.lng ?? 0,
-      wp.lat ?? 0,
-      wp.lng ?? 0
-    );
-    return distance > 0.5; // Next ravito is more than 500m away
-  });
+  const [totalProgress] = useState<number>(0);
 
   return (
     <div className="space-y-6">

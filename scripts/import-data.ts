@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { type WayPoint, type TrackPoint } from "../src/lib/types";
+import { type Waypoint, type Trackpoint } from "../src/lib/database.types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -31,18 +31,19 @@ interface StepData {
   estimated_duration_minutes: number;
 }
 
-interface TrackPointWithStep extends TrackPoint {
+interface TrackPointWithStep extends Trackpoint {
   gpx_filename: string;
-  step_id?: number;
+  step_id: number | null;
 }
 
-async function parseWaypoints(filePath: string): Promise<WayPoint[]> {
+async function parseWaypoints(filePath: string): Promise<Waypoint[]> {
   const csvContent = await fs.readFile(filePath, "utf-8");
   const lines = csvContent.trim().split("\n");
-  return lines.slice(1).map((line) => {
+  return lines.slice(1).map((line, index) => {
     const values = line.split(",");
     const name = values[1];
     return {
+      id: index,
       km: Number.parseFloat(values[0]),
       name: name.replace(/"/g, ""),
       lat: Number.parseFloat(values[2]),
@@ -106,11 +107,13 @@ async function parseGPX(
 
   for (let i = 0; i < coords.length; i++) {
     trackPoints.push({
+      id: i,
       lat: coords[i].lat,
       lng: coords[i].lng,
-      elevation: elevations[i] || undefined,
-      time: times[i] || undefined,
+      elevation: elevations[i] || null,
+      time: times[i]?.toISOString() || null,
       gpx_filename: filename,
+      step_id: null,
     });
   }
 

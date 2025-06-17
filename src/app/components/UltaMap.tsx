@@ -3,6 +3,7 @@
 import { Trackpoint, Waypoint } from "@/lib/database.types";
 import { MapContainer, Marker, TileLayer, Polyline } from "react-leaflet";
 import L from "leaflet";
+import { TrackPoint } from "@/lib/useLiveTrack";
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -18,9 +19,23 @@ const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
 interface UltraMapProps {
   waypoints: Waypoint[];
   trackpoints: Trackpoint[];
+  liveTrackData?: {
+    trackPoints: TrackPoint[];
+    sessionId: string;
+  };
+  isConnected?: boolean;
+  liveTrackLoading?: boolean;
+  isFetching?: boolean;
 }
 
-export default function UltraMap({ waypoints, trackpoints }: UltraMapProps) {
+export default function UltraMap({
+  waypoints,
+  trackpoints,
+  liveTrackData,
+  isConnected = false,
+  liveTrackLoading = false,
+  isFetching = false,
+}: UltraMapProps) {
   // Convertir les trackpoints en positions pour la polyline
   const validTrackpoints = trackpoints.filter(
     (trackpoint) => trackpoint.lat && trackpoint.lng
@@ -29,9 +44,29 @@ export default function UltraMap({ waypoints, trackpoints }: UltraMapProps) {
     (trackpoint) => [trackpoint.lat!, trackpoint.lng!] as [number, number]
   );
 
-  // Points de départ et d'arrivée
-  const startPoint = validTrackpoints[0];
-  const endPoint = validTrackpoints[validTrackpoints.length - 1];
+  // Convertir les données LiveTrack en positions
+  const liveTrackPositions =
+    liveTrackData?.trackPoints?.map(
+      (point: TrackPoint) =>
+        [point.position.lat, point.position.lon] as [number, number]
+    ) || [];
+
+  // Points de départ et d'arrivée (prioriser les données en temps réel)
+  const allValidPoints = [
+    ...validTrackpoints,
+    ...(liveTrackData?.trackPoints?.map((point: TrackPoint) => ({
+      lat: point.position.lat,
+      lng: point.position.lon,
+    })) || []),
+  ];
+
+  const startPoint = allValidPoints[0];
+  const endPoint = allValidPoints[allValidPoints.length - 1];
+
+  // Position actuelle (dernier point des données LiveTrack)
+  const currentPosition = liveTrackData?.trackPoints?.length
+    ? liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1]
+    : null;
 
   return (
     <MapContainer
@@ -45,16 +80,56 @@ export default function UltraMap({ waypoints, trackpoints }: UltraMapProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* Tracé GPX avec une polyline */}
+      {/* Tracé GPX historique */}
       {trackPositions.length > 0 && (
         <Polyline
           positions={trackPositions}
           pathOptions={{
             color: "#3388ff",
-            weight: 4,
-            opacity: 0.8,
+            weight: 3,
+            opacity: 0.6,
           }}
         />
+      )}
+
+      {/* Tracé en temps réel */}
+      {liveTrackPositions.length > 0 && (
+        <Polyline
+          positions={liveTrackPositions}
+          pathOptions={{
+            color: "#ff4444",
+            weight: 4,
+            opacity: 0.9,
+          }}
+        />
+      )}
+
+      {/* Indicateur de statut LiveTrack */}
+      {liveTrackData && (
+        <div className="absolute top-4 right-4 z-[1000] bg-white p-2 rounded-lg shadow-lg">
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                isConnected
+                  ? isFetching
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-green-500"
+                  : liveTrackLoading
+                  ? "bg-yellow-500"
+                  : "bg-red-500"
+              }`}
+            />
+            <span className="text-sm font-medium">
+              {isConnected
+                ? isFetching
+                  ? "Mise à jour..."
+                  : "Live"
+                : liveTrackLoading
+                ? "Connexion..."
+                : "Déconnecté"}
+            </span>
+          </div>
+        </div>
       )}
 
       {/* Marqueur de départ */}
@@ -70,6 +145,17 @@ export default function UltraMap({ waypoints, trackpoints }: UltraMapProps) {
         <Marker
           position={[endPoint.lat!, endPoint.lng!]}
           icon={createEmojiIcon("🏁")}
+        />
+      )}
+
+      {/* Position actuelle en temps réel */}
+      {currentPosition && (
+        <Marker
+          position={[
+            currentPosition.position.lat,
+            currentPosition.position.lon,
+          ]}
+          icon={createEmojiIcon("🔴")}
         />
       )}
 

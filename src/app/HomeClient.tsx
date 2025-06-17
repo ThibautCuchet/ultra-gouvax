@@ -1,18 +1,37 @@
-import { Step, Trackpoint, Waypoint } from "@/lib/database.types";
+"use client";
+
+import {
+  LiveTrackConfig,
+  Step,
+  Trackpoint,
+  Waypoint,
+} from "@/lib/database.types";
 import UltraMap from "./components/UltaMap";
 import UltraStats from "./components/UltraStats";
+import LiveStats from "./components/LiveStats";
+import { useLiveTrack } from "@/lib/useLiveTrack";
 
 interface HomeClientProps {
   waypoints: Waypoint[];
   steps: Step[];
   trackpoints: Trackpoint[];
+  liveTrackConfig: LiveTrackConfig | null;
 }
 
 export default function HomeClient({
   waypoints,
   steps,
   trackpoints,
+  liveTrackConfig,
 }: HomeClientProps) {
+  // Hook pour les données LiveTrack
+  const {
+    data: liveTrackData,
+    loading: liveTrackLoading,
+    isConnected,
+    isFetching,
+  } = useLiveTrack(liveTrackConfig?.live_track_url ?? null);
+
   const totalDistance = steps.reduce(
     (acc, step) => acc + (step.distance_km ?? 0),
     0
@@ -46,12 +65,29 @@ export default function HomeClient({
               <h2 className="text-2xl font-semibold mb-4">
                 🗺️ Carte en temps réel
               </h2>
-              <div className="h-96 w-full rounded-lg overflow-hidden border">
-                <UltraMap waypoints={waypoints} trackpoints={trackpoints} />
+              <div className="h-96 w-full rounded-lg overflow-hidden border relative">
+                <UltraMap
+                  waypoints={waypoints}
+                  trackpoints={trackpoints}
+                  liveTrackData={liveTrackData || undefined}
+                  isConnected={isConnected}
+                  liveTrackLoading={liveTrackLoading}
+                  isFetching={isFetching}
+                />
               </div>
             </div>
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
+            <LiveStats
+              fitnessData={
+                liveTrackData?.trackPoints?.[
+                  liveTrackData.trackPoints.length - 1
+                ]?.fitnessPointData
+              }
+              isConnected={isConnected}
+              loading={liveTrackLoading}
+              isFetching={isFetching}
+            />
             <UltraStats waypoints={waypoints} />
           </div>
         </div>
