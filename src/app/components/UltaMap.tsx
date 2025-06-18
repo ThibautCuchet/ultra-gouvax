@@ -1,9 +1,17 @@
 "use client";
 
 import { Trackpoint, Waypoint, Step } from "@/lib/database.types";
-import { MapContainer, Marker, TileLayer, Polyline } from "react-leaflet";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  Polyline,
+  Popup,
+} from "react-leaflet";
 import L from "leaflet";
 import { TrackPoint } from "@/lib/useLiveTrack";
+import { findClosestTrackPoint } from "@/lib/calculate";
+import { format } from "date-fns";
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -42,6 +50,37 @@ export default function UltraMap({
   const validTrackpoints = trackpoints.filter(
     (trackpoint) => trackpoint.lat && trackpoint.lng
   );
+
+  function getEtaForWaypoint(waypoint: Waypoint): string | null {
+    if (!liveTrackData || liveTrackData.trackPoints.length === 0) {
+      return null;
+    }
+
+    const target = findClosestTrackPoint(
+      { lat: waypoint.lat ?? 0, lng: waypoint.lng ?? 0 },
+      validTrackpoints
+    );
+    if (!target || !target.point.time) {
+      return null;
+    }
+
+    const lastPoint =
+      liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1];
+    const current = findClosestTrackPoint(
+      { lat: lastPoint.position.lat, lng: lastPoint.position.lon },
+      validTrackpoints
+    );
+    if (!current || !current.point.time) {
+      return null;
+    }
+
+    const diffMs =
+      new Date(target.point.time).getTime() -
+      new Date(current.point.time).getTime();
+
+    const etaDate = new Date(Date.now() + diffMs);
+    return format(etaDate, "HH:mm");
+  }
   const trackPositions = validTrackpoints.map(
     (trackpoint) => [trackpoint.lat!, trackpoint.lng!] as [number, number]
   );
@@ -176,13 +215,46 @@ export default function UltraMap({
       ))}
 
       {/* Waypoints avec des markers */}
-      {waypoints.map((waypoint) => (
-        <Marker
-          key={waypoint.id}
-          position={[waypoint.lat ?? 0, waypoint.lng ?? 0]}
-          icon={createEmojiIcon("📍")}
-        />
-      ))}
+      {waypoints.map((waypoint) => {
+        const eta = getEtaForWaypoint(waypoint);
+        const googleLink = `https://www.google.com/maps/search/?api=1&query=${waypoint.lat},${waypoint.lng}`;
+        const appleLink = `https://maps.apple.com/?ll=${waypoint.lat},${waypoint.lng}`;
+        return (
+          <Marker
+            key={waypoint.id}
+            position={[waypoint.lat ?? 0, waypoint.lng ?? 0]}
+            icon={createEmojiIcon("📍")}
+          >
+            <Popup>
+              <div className="space-y-1 text-sm">
+                {waypoint.name && (
+                  <div className="font-semibold">{waypoint.name}</div>
+                )}
+                {waypoint.km !== null && <div>{waypoint.km} km</div>}
+                {eta && <div>ETA : {eta}</div>}
+                <div className="pt-1 flex flex-col space-y-1">
+                  <a
+                    href={googleLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    Ouvrir dans Google Maps
+                  </a>
+                  <a
+                    href={appleLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    Ouvrir dans Plans
+                  </a>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 }
