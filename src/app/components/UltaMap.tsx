@@ -52,38 +52,39 @@ export default function UltraMap({
   );
 
   function getEtaForWaypoint(waypoint: Waypoint): string | null {
-    if (!liveTrackData || liveTrackData.trackPoints.length === 0) {
+    if (
+      !liveTrackData ||
+      liveTrackData.trackPoints.length === 0 ||
+      waypoint.lat == null ||
+      waypoint.lng == null
+    ) {
       return null;
     }
 
     const target = findClosestTrackPoint(
-      { lat: waypoint.lat ?? 0, lng: waypoint.lng ?? 0 },
+      { lat: waypoint.lat, lng: waypoint.lng },
       validTrackpoints
     );
     if (!target || !target.point.time) {
       return null;
     }
 
-    const lastPoint =
+    const lastLive =
       liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1];
     const current = findClosestTrackPoint(
-      { lat: lastPoint.position.lat, lng: lastPoint.position.lon },
+      { lat: lastLive.position.lat, lng: lastLive.position.lon },
       validTrackpoints
     );
     if (!current || !current.point.time) {
       return null;
     }
 
-    const targetTime = new Date(target.point.time).getTime();
-    const currentTime = new Date(current.point.time).getTime();
+    const scheduledCurrent = new Date(current.point.time).getTime();
+    const scheduledTarget = new Date(target.point.time).getTime();
+    const actualCurrent = new Date(lastLive.dateTime).getTime();
 
-    // Adjust for race spanning over two days
-    let diffMs = targetTime - currentTime;
-    if (diffMs < 0) {
-      diffMs += 24 * 60 * 60 * 1000;
-    }
-
-    const etaDate = new Date(Date.now() + diffMs);
+    const offset = actualCurrent - scheduledCurrent;
+    const etaDate = new Date(scheduledTarget + offset);
     return format(etaDate, "HH:mm");
   }
   const trackPositions = validTrackpoints.map(
@@ -222,7 +223,10 @@ export default function UltraMap({
       {/* Waypoints avec des markers */}
       {waypoints.map((waypoint) => {
         const eta = getEtaForWaypoint(waypoint);
-        const mapsLink = `geo:${waypoint.lat},${waypoint.lng}`;
+        const mapsLink =
+          waypoint.lat != null && waypoint.lng != null
+            ? `geo:${waypoint.lat},${waypoint.lng}`
+            : null;
         return (
           <Marker
             key={waypoint.id}
@@ -236,16 +240,18 @@ export default function UltraMap({
                 )}
                 {waypoint.km !== null && <div>{waypoint.km} km</div>}
                 {eta && <div>ETA : {eta}</div>}
-                <div className="pt-1">
-                  <a
-                    href={mapsLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-blue-600 underline"
-                  >
-                    <span>🗺️</span> Itinéraire
-                  </a>
-                </div>
+                {mapsLink && (
+                  <div className="pt-1">
+                    <a
+                      href={mapsLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-blue-600 underline"
+                    >
+                      <span>🗺️</span> Itinéraire
+                    </a>
+                  </div>
+                )}
               </div>
             </Popup>
           </Marker>
