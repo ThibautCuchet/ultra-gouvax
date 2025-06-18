@@ -93,6 +93,7 @@ export default function HomeClient({
               <div className="h-96 w-full rounded-lg overflow-hidden border relative">
                 <UltraMap
                   waypoints={waypoints}
+                  steps={steps}
                   trackpoints={trackpoints}
                   liveTrackData={liveTrackData || undefined}
                   isConnected={isConnected}
