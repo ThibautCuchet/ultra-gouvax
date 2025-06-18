@@ -1,6 +1,6 @@
 "use client";
 
-import { Trackpoint, Waypoint } from "@/lib/database.types";
+import { Trackpoint, Waypoint, Step } from "@/lib/database.types";
 import { MapContainer, Marker, TileLayer, Polyline } from "react-leaflet";
 import L from "leaflet";
 import { TrackPoint } from "@/lib/useLiveTrack";
@@ -18,6 +18,7 @@ const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
 
 interface UltraMapProps {
   waypoints: Waypoint[];
+  steps: Step[];
   trackpoints: Trackpoint[];
   liveTrackData?: {
     trackPoints: TrackPoint[];
@@ -30,6 +31,7 @@ interface UltraMapProps {
 
 export default function UltraMap({
   waypoints,
+  steps,
   trackpoints,
   liveTrackData,
   isConnected = false,
@@ -67,6 +69,11 @@ export default function UltraMap({
   const currentPosition = liveTrackData?.trackPoints?.length
     ? liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1]
     : null;
+
+  // Extraire les positions des ravitos (fin de chaque étape, sauf la dernière)
+  const ravitoPositions = steps
+    .slice(0, steps.length - 1)
+    .map((step) => [step.end_lat, step.end_lng] as [number, number]);
 
   return (
     <MapContainer
@@ -158,6 +165,15 @@ export default function UltraMap({
           icon={createEmojiIcon("🔴")}
         />
       )}
+
+      {/* Points de ravitaillement */}
+      {ravitoPositions.map((pos, idx) => (
+        <Marker
+          key={`ravito-${idx}`}
+          position={pos}
+          icon={createEmojiIcon("🥤")}
+        />
+      ))}
 
       {/* Waypoints avec des markers */}
       {waypoints.map((waypoint) => (
