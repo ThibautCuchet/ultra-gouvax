@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,9 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script
-          crossOrigin="anonymous"
+        <Script
           src="//unpkg.com/react-scan/dist/auto.global.js"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
         />
       </head>
       <body className="antialiased">

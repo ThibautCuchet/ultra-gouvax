@@ -10,6 +10,8 @@ import UltraMap from "./components/UltaMap";
 import UltraStats from "./components/UltraStats";
 import LiveStats from "./components/LiveStats";
 import { useLiveTrack } from "@/lib/useLiveTrack";
+import { useEffect, useMemo, useState } from "react";
+import { findClosestTrackPoint, calculateProgress } from "@/lib/calculate";
 
 interface HomeClientProps {
   waypoints: Waypoint[];
@@ -25,12 +27,35 @@ export default function HomeClient({
   liveTrackConfig,
 }: HomeClientProps) {
   // Hook pour les données LiveTrack
-  const {
+  const { 
     data: liveTrackData,
     loading: liveTrackLoading,
     isConnected,
     isFetching,
   } = useLiveTrack(liveTrackConfig?.live_track_url ?? null);
+
+  const [progress, setProgress] = useState(0);
+
+  const validTrackpoints = useMemo(
+    () => trackpoints.filter((tp) => tp.lat !== null && tp.lng !== null),
+    [trackpoints]
+  );
+
+  useEffect(() => {
+    if (!liveTrackData?.trackPoints?.length || validTrackpoints.length === 0) {
+      return;
+    }
+
+    const lastPoint =
+      liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1];
+    const closest = findClosestTrackPoint(
+      { lat: lastPoint.position.lat, lng: lastPoint.position.lon },
+      validTrackpoints
+    );
+    if (closest) {
+      setProgress(calculateProgress(closest.index, validTrackpoints.length));
+    }
+  }, [liveTrackData, validTrackpoints]);
 
   const totalDistance = steps.reduce(
     (acc, step) => acc + (step.distance_km ?? 0),
@@ -78,6 +103,7 @@ export default function HomeClient({
             </div>
           </div>
           <div className="lg:col-span-1 space-y-6">
+            <UltraStats progress={progress} />
             <LiveStats
               fitnessData={
                 liveTrackData?.trackPoints?.[
@@ -88,7 +114,6 @@ export default function HomeClient({
               loading={liveTrackLoading}
               isFetching={isFetching}
             />
-            <UltraStats waypoints={waypoints} />
           </div>
         </div>
 
