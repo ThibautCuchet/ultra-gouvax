@@ -74,9 +74,14 @@ export default function UltraMap({
       return null;
     }
 
-    const diffMs =
-      new Date(target.point.time).getTime() -
-      new Date(current.point.time).getTime();
+    const targetTime = new Date(target.point.time).getTime();
+    const currentTime = new Date(current.point.time).getTime();
+
+    // Adjust for race spanning over two days
+    let diffMs = targetTime - currentTime;
+    if (diffMs < 0) {
+      diffMs += 24 * 60 * 60 * 1000;
+    }
 
     const etaDate = new Date(Date.now() + diffMs);
     return format(etaDate, "HH:mm");
@@ -217,8 +222,7 @@ export default function UltraMap({
       {/* Waypoints avec des markers */}
       {waypoints.map((waypoint) => {
         const eta = getEtaForWaypoint(waypoint);
-        const googleLink = `https://www.google.com/maps/search/?api=1&query=${waypoint.lat},${waypoint.lng}`;
-        const appleLink = `https://maps.apple.com/?ll=${waypoint.lat},${waypoint.lng}`;
+        const mapsLink = `geo:${waypoint.lat},${waypoint.lng}`;
         return (
           <Marker
             key={waypoint.id}
@@ -232,22 +236,14 @@ export default function UltraMap({
                 )}
                 {waypoint.km !== null && <div>{waypoint.km} km</div>}
                 {eta && <div>ETA : {eta}</div>}
-                <div className="pt-1 flex flex-col space-y-1">
+                <div className="pt-1">
                   <a
-                    href={googleLink}
+                    href={mapsLink}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-blue-600 underline"
+                    className="inline-flex items-center gap-1 text-blue-600 underline"
                   >
-                    Ouvrir dans Google Maps
-                  </a>
-                  <a
-                    href={appleLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-600 underline"
-                  >
-                    Ouvrir dans Plans
+                    <span>🗺️</span> Itinéraire
                   </a>
                 </div>
               </div>
