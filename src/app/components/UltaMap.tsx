@@ -13,6 +13,12 @@ import L from "leaflet";
 import { TrackPoint } from "@/lib/useLiveTrack";
 import { findClosestTrackPoint } from "@/lib/calculate";
 import { format } from "date-fns";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
+
+interface WindowWithAudioContext extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -95,6 +101,25 @@ export default function UltraMap({
   liveTrackLoading = false,
   isFetching = false,
 }: UltraMapProps) {
+  const [copiedWaypointId, setCopiedWaypointId] = useState<Waypoint["id"] | null>(null);
+
+  const playBeep = () => {
+    try {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as WindowWithAudioContext).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const oscillator = ctx.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      oscillator.connect(ctx.destination);
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.15);
+    } catch {
+      /* noop */
+    }
+  };
   // Convertir les trackpoints en positions pour la polyline
   const validTrackpoints = trackpoints.filter(
     (trackpoint) => trackpoint.lat && trackpoint.lng
@@ -222,7 +247,7 @@ export default function UltraMap({
           });
           const mapsLink =
             waypoint.lat != null && waypoint.lng != null
-              ? `geo:${waypoint.lat},${waypoint.lng}`
+              ? `https://www.google.com/maps/dir/?api=1&destination=${waypoint.lat},${waypoint.lng}`
               : null;
           return (
             <Marker
@@ -241,7 +266,7 @@ export default function UltraMap({
                   {waypoint.km !== null && <div>{waypoint.km} km</div>}
                   {eta && <div>ETA : {eta}</div>}
                   {mapsLink && (
-                    <div className="pt-1">
+                    <div className="pt-1 space-y-1">
                       <a
                         href={mapsLink}
                         target="_blank"
@@ -250,6 +275,32 @@ export default function UltraMap({
                       >
                         <span>🗺️</span> Itinéraire
                       </a>
+                      <div className="flex items-center gap-1">
+                        <span>
+                          {waypoint.lat?.toFixed(5)}, {waypoint.lng?.toFixed(5)}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `${waypoint.lat},${waypoint.lng}`
+                            );
+                            playBeep();
+                            setCopiedWaypointId(waypoint.id);
+                            setTimeout(() => setCopiedWaypointId(null), 1500);
+                          }}
+                          className="text-blue-600"
+                          aria-label="Copier les coordonnées"
+                        >
+                          {copiedWaypointId === waypoint.id ? (
+                            <Check className="w-4 h-4 text-green-600 animate-bounce" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                        {copiedWaypointId === waypoint.id && (
+                          <span className="text-green-600 text-xs">Copié !</span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

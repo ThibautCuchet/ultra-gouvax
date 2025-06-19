@@ -79,7 +79,7 @@ export default function RavitoList({
           });
           const mapsLink =
             ravito.lat != null && ravito.lng != null
-              ? `geo:${ravito.lat},${ravito.lng}`
+              ? `https://www.google.com/maps/dir/?api=1&destination=${ravito.lat},${ravito.lng}`
               : null;
           return (
             <li key={ravito.id} className="flex items-center justify-between">
