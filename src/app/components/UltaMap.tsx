@@ -13,6 +13,7 @@ import L from "leaflet";
 import { TrackPoint } from "@/lib/useLiveTrack";
 import { findClosestTrackPoint } from "@/lib/calculate";
 import { format } from "date-fns";
+import UserLocationLayer from "./UserLocationLayer";
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -282,6 +283,9 @@ export default function UltraMap({
           </Marker>
         )}
       </Pane>
+
+      {/* Localisation de l'utilisateur */}
+      <UserLocationLayer />
     </MapContainer>
   );
 }
