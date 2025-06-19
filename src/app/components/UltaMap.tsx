@@ -15,6 +15,7 @@ import { findClosestTrackPoint } from "@/lib/calculate";
 import { format } from "date-fns";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
+import UserLocationLayer from "./UserLocationLayer";
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -311,6 +312,9 @@ export default function UltraMap({
           </Marker>
         )}
       </Pane>
+
+      {/* Localisation de l'utilisateur */}
+      <UserLocationLayer />
     </MapContainer>
   );
 }
