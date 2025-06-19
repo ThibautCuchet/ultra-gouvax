@@ -13,6 +13,7 @@ import L from "leaflet";
 import { TrackPoint } from "@/lib/useLiveTrack";
 import { findClosestTrackPoint } from "@/lib/calculate";
 import { format } from "date-fns";
+import { Copy } from "lucide-react";
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -222,7 +223,7 @@ export default function UltraMap({
           });
           const mapsLink =
             waypoint.lat != null && waypoint.lng != null
-              ? `geo:${waypoint.lat},${waypoint.lng}`
+              ? `https://www.google.com/maps/dir/?api=1&destination=${waypoint.lat},${waypoint.lng}`
               : null;
           return (
             <Marker
@@ -241,7 +242,7 @@ export default function UltraMap({
                   {waypoint.km !== null && <div>{waypoint.km} km</div>}
                   {eta && <div>ETA : {eta}</div>}
                   {mapsLink && (
-                    <div className="pt-1">
+                    <div className="pt-1 space-y-1">
                       <a
                         href={mapsLink}
                         target="_blank"
@@ -250,6 +251,22 @@ export default function UltraMap({
                       >
                         <span>🗺️</span> Itinéraire
                       </a>
+                      <div className="flex items-center gap-1">
+                        <span>
+                          {waypoint.lat?.toFixed(5)}, {waypoint.lng?.toFixed(5)}
+                        </span>
+                        <button
+                          onClick={() =>
+                            navigator.clipboard.writeText(
+                              `${waypoint.lat},${waypoint.lng}`
+                            )
+                          }
+                          className="text-blue-600"
+                          aria-label="Copier les coordonnées"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
