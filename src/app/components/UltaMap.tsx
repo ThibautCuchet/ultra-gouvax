@@ -1,6 +1,6 @@
 "use client";
 
-import { Trackpoint, Waypoint, Step } from "@/lib/database.types";
+import { Trackpoint, Waypoint } from "@/lib/database.types";
 import {
   MapContainer,
   Marker,
@@ -26,7 +26,6 @@ const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
 
 interface UltraMapProps {
   waypoints: Waypoint[];
-  steps: Step[];
   trackpoints: Trackpoint[];
   liveTrackData?: {
     trackPoints: TrackPoint[];
@@ -84,7 +83,6 @@ function getEtaForWaypoint({
 
 export default function UltraMap({
   waypoints,
-  steps,
   trackpoints,
   liveTrackData,
   isConnected = false,
@@ -117,7 +115,7 @@ export default function UltraMap({
   ];
 
   const startPoint = allValidPoints[0];
-  const endPoint = allValidPoints[allValidPoints.length - 1];
+  const endPoint = validTrackpoints[validTrackpoints.length - 1];
 
   // Position actuelle (dernier point des données LiveTrack)
   const currentPosition = liveTrackData?.trackPoints?.length
@@ -211,8 +209,31 @@ export default function UltraMap({
             currentPosition.position.lat,
             currentPosition.position.lon,
           ]}
-          icon={createEmojiIcon("🔴")}
-        />
+          icon={createEmojiIcon("🏃‍➡️")}
+        >
+          <Popup>
+            <div className="text-sm space-y-1">
+              <div>
+                🏃 Vitesse :
+                {" "}
+                {(
+                  (currentPosition.fitnessPointData?.speedMetersPerSec ||
+                    currentPosition.speed ||
+                    0) *
+                  3.6
+                ).toFixed(1)}
+                {" km/h"}
+              </div>
+              {currentPosition.fitnessPointData?.heartRateBeatsPerMin != null && (
+                <div>
+                  ❤️ Fréquence cardiaque :
+                  {" "}
+                  {currentPosition.fitnessPointData.heartRateBeatsPerMin} bpm
+                </div>
+              )}
+            </div>
+          </Popup>
+        </Marker>
       )}
       {/* Waypoints avec des markers */}
       {waypoints.map((waypoint) => {
