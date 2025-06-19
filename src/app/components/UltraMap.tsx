@@ -5,7 +5,6 @@ import {
   MapContainer,
   Marker,
   TileLayer,
-  Polyline,
   Popup,
   Pane,
 } from "react-leaflet";
@@ -111,21 +110,6 @@ export default function UltraMap({
     (trackpoint) => [trackpoint.lat!, trackpoint.lng!] as [number, number]
   );
 
-  // Convertir les données LiveTrack en positions
-  const liveTrackPositions =
-    liveTrackData?.trackPoints?.map(
-      (point: TrackPoint) =>
-        [point.position.lat, point.position.lon] as [number, number]
-    ) || [];
-
-  // Points de départ et d'arrivée (prioriser les données en temps réel)
-  const allValidPoints = [
-    ...validTrackpoints,
-    ...(liveTrackData?.trackPoints?.map((point: TrackPoint) => ({
-      lat: point.position.lat,
-      lng: point.position.lon,
-    })) || []),
-  ];
 
   const startPoint = trackPositions.at(0);
   const endPoint = trackPositions.at(-1);

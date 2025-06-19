@@ -6,7 +6,7 @@ import {
   Trackpoint,
   Waypoint,
 } from "@/lib/database.types";
-import UltraMap from "./components/UltaMap";
+import UltraMap from "./components/UltraMap";
 import UltraStats from "./components/UltraStats";
 import LiveStats from "./components/LiveStats";
 import RavitoList from "./components/RavitoList";

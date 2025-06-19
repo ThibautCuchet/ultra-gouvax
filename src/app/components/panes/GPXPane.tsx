@@ -1,7 +1,7 @@
-import { Trackpoint } from "@/lib/database.types"
-import {
-    Polyline, Pane
-} from "react-leaflet";
+"use client";
+
+import { Trackpoint } from "@/lib/database.types";
+import { Pane, Polyline } from "react-leaflet";
 
 type GPXPaneProps = {
     trackpoints: Trackpoint[];
