@@ -123,5 +123,5 @@
 }
 
 /* Ensure waypoint popups stay on top */
-.leaflet-popup-pane { z-index: 10000 !important; }
+.leaflet-popup { z-index: 10000 !important; }
 
