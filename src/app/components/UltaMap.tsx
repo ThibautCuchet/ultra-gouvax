@@ -16,10 +16,6 @@ import { format } from "date-fns";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 
-interface WindowWithAudioContext extends Window {
-  webkitAudioContext?: typeof AudioContext;
-}
-
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
   return L.divIcon({
@@ -101,25 +97,8 @@ export default function UltraMap({
   liveTrackLoading = false,
   isFetching = false,
 }: UltraMapProps) {
-  const [copiedWaypointId, setCopiedWaypointId] = useState<Waypoint["id"] | null>(null);
-
-  const playBeep = () => {
-    try {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as WindowWithAudioContext).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const oscillator = ctx.createOscillator();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
-      oscillator.connect(ctx.destination);
-      oscillator.start();
-      oscillator.stop(ctx.currentTime + 0.15);
-    } catch {
-      /* noop */
-    }
-  };
+  const [copiedWaypointId, setCopiedWaypointId] =
+    useState<Waypoint["id"] | null>(null);
   // Convertir les trackpoints en positions pour la polyline
   const validTrackpoints = trackpoints.filter(
     (trackpoint) => trackpoint.lat && trackpoint.lng
@@ -284,7 +263,6 @@ export default function UltraMap({
                             navigator.clipboard.writeText(
                               `${waypoint.lat},${waypoint.lng}`
                             );
-                            playBeep();
                             setCopiedWaypointId(waypoint.id);
                             setTimeout(() => setCopiedWaypointId(null), 1500);
                           }}
