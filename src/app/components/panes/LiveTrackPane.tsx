@@ -1,9 +1,14 @@
+"use client";
+
+import { Pane, Polyline } from "react-leaflet";
+import { TrackPoint } from "@/lib/useLiveTrack";
+
 type LiveTrackPaneProps = {
-    liveTrackData?: {
-        trackPoints: TrackPoint[];
-        sessionId: string;
-      };
-}
+  liveTrackData?: {
+    trackPoints: TrackPoint[];
+    sessionId: string;
+  };
+};
 
 export default function LiveTrackPane({
     liveTrackData
