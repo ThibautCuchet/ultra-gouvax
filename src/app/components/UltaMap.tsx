@@ -25,6 +25,11 @@ const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
   });
 };
 
+const formatSpeed = (metersPerSec: number) => {
+  const kmh = metersPerSec * 3.6;
+  return `${kmh.toFixed(1)} km/h`;
+};
+
 interface UltraMapProps {
   waypoints: Waypoint[];
   trackpoints: Trackpoint[];
@@ -262,8 +267,19 @@ export default function UltraMap({
               currentPosition.position.lat,
               currentPosition.position.lon,
             ]}
-            icon={createEmojiIcon("🔴")}
-          />
+            icon={createEmojiIcon("🏃‍➡️")}
+          >
+            <Popup>
+              <div className="space-y-1 text-sm">
+                <div>
+                  🏃 {formatSpeed(currentPosition.fitnessPointData.speedMetersPerSec)}
+                </div>
+                <div>
+                  ❤️ {currentPosition.fitnessPointData.heartRateBeatsPerMin} bpm
+                </div>
+              </div>
+            </Popup>
+          </Marker>
         )}
       </Pane>
     </MapContainer>
