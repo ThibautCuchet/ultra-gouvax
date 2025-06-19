@@ -223,7 +223,10 @@ export default function UltraMap({
             <Marker
               key={waypoint.id}
               position={[waypoint.lat ?? 0, waypoint.lng ?? 0]}
-              icon={createEmojiIcon(waypoint.is_ravito ? "🥤" : "📍")}
+              icon={createEmojiIcon(
+                waypoint.is_ravito ? "🥤" : "📍",
+                waypoint.is_ravito ? [30, 30] : [20, 20]
+              )}
             >
               <Popup>
                 <div className="space-y-1 text-sm">
