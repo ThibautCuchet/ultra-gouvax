@@ -16,6 +16,8 @@ import { format } from "date-fns";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import UserLocationLayer from "./UserLocationLayer";
+import GPXPane from "./panes/GPXPane";
+import LiveTrackPane from "./panes/LiveTrackPane";
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -146,32 +148,10 @@ export default function UltraMap({
       />
 
       {/* Tracé GPX historique */}
-      <Pane name="gpx" style={{ zIndex: 400 }}>
-        {trackPositions.length > 0 && (
-          <Polyline
-            positions={trackPositions}
-            pathOptions={{
-              color: "#3388ff",
-              weight: 3,
-              opacity: 0.6,
-            }}
-          />
-        )}
-      </Pane>
+      <GPXPane trackpoints={trackpoints} />
 
       {/* Tracé en temps réel */}
-      <Pane name="liveTrack" style={{ zIndex: 410 }}>
-        {liveTrackPositions.length > 0 && (
-          <Polyline
-            positions={liveTrackPositions}
-            pathOptions={{
-              color: "#ff4444",
-              weight: 4,
-              opacity: 0.9,
-            }}
-          />
-        )}
-      </Pane>
+      <LiveTrackPane liveTrackData={liveTrackData} />
 
       {/* Indicateur de statut LiveTrack */}
       {liveTrackData && (
