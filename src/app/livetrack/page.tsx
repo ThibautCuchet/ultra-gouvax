@@ -5,6 +5,8 @@ import {
   updateLiveTrackConfig,
 } from "@/lib/live-track-actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function LiveTrackPage() {
   // Récupérer la configuration actuelle
   const currentConfig = await getLiveTrackConfig();
