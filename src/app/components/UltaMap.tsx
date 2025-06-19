@@ -125,8 +125,8 @@ export default function UltraMap({
     })) || []),
   ];
 
-  const startPoint = allValidPoints[0];
-  const endPoint = allValidPoints[allValidPoints.length - 1];
+  const startPoint = trackPositions.at(0);
+  const endPoint = trackPositions.at(-1);
 
   // Position actuelle (dernier point des données LiveTrack)
   const currentPosition = liveTrackData?.trackPoints?.length
@@ -205,7 +205,7 @@ export default function UltraMap({
         {/* Marqueur de départ */}
         {startPoint && (
           <Marker
-            position={[startPoint.lat!, startPoint.lng!]}
+            position={startPoint}
             icon={createEmojiIcon("🚩")}
           />
         )}
@@ -213,7 +213,7 @@ export default function UltraMap({
         {/* Marqueur d'arrivée */}
         {endPoint && startPoint !== endPoint && (
           <Marker
-            position={[endPoint.lat!, endPoint.lng!]}
+            position={endPoint}
             icon={createEmojiIcon("🏁")}
           />
         )}
