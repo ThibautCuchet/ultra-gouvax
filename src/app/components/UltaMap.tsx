@@ -37,6 +37,51 @@ interface UltraMapProps {
   isFetching?: boolean;
 }
 
+function getEtaForWaypoint({
+  waypoint,
+  validTrackpoints,
+  liveTrackData,
+}: {
+  waypoint: Waypoint;
+  validTrackpoints: Trackpoint[];
+  liveTrackData?: { trackPoints: TrackPoint[]; sessionId: string };
+}): string | null {
+  if (
+    !liveTrackData ||
+    liveTrackData.trackPoints.length === 0 ||
+    waypoint.lat == null ||
+    waypoint.lng == null
+  ) {
+    return null;
+  }
+
+  const target = findClosestTrackPoint(
+    { lat: waypoint.lat, lng: waypoint.lng },
+    validTrackpoints
+  );
+  if (!target || !target.point.time) {
+    return null;
+  }
+
+  const lastLive =
+    liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1];
+  const current = findClosestTrackPoint(
+    { lat: lastLive.position.lat, lng: lastLive.position.lon },
+    validTrackpoints
+  );
+  if (!current || !current.point.time) {
+    return null;
+  }
+
+  const scheduledCurrent = new Date(current.point.time).getTime();
+  const scheduledTarget = new Date(target.point.time).getTime();
+  const actualCurrent = new Date(lastLive.dateTime).getTime();
+
+  const offset = actualCurrent - scheduledCurrent;
+  const etaDate = new Date(scheduledTarget + offset);
+  return format(etaDate, "HH:mm");
+}
+
 export default function UltraMap({
   waypoints,
   steps,
@@ -51,42 +96,6 @@ export default function UltraMap({
     (trackpoint) => trackpoint.lat && trackpoint.lng
   );
 
-  function getEtaForWaypoint(waypoint: Waypoint): string | null {
-    if (
-      !liveTrackData ||
-      liveTrackData.trackPoints.length === 0 ||
-      waypoint.lat == null ||
-      waypoint.lng == null
-    ) {
-      return null;
-    }
-
-    const target = findClosestTrackPoint(
-      { lat: waypoint.lat, lng: waypoint.lng },
-      validTrackpoints
-    );
-    if (!target || !target.point.time) {
-      return null;
-    }
-
-    const lastLive =
-      liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1];
-    const current = findClosestTrackPoint(
-      { lat: lastLive.position.lat, lng: lastLive.position.lon },
-      validTrackpoints
-    );
-    if (!current || !current.point.time) {
-      return null;
-    }
-
-    const scheduledCurrent = new Date(current.point.time).getTime();
-    const scheduledTarget = new Date(target.point.time).getTime();
-    const actualCurrent = new Date(lastLive.dateTime).getTime();
-
-    const offset = actualCurrent - scheduledCurrent;
-    const etaDate = new Date(scheduledTarget + offset);
-    return format(etaDate, "HH:mm");
-  }
   const trackPositions = validTrackpoints.map(
     (trackpoint) => [trackpoint.lat!, trackpoint.lng!] as [number, number]
   );
@@ -114,11 +123,6 @@ export default function UltraMap({
   const currentPosition = liveTrackData?.trackPoints?.length
     ? liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1]
     : null;
-
-  // Extraire les positions des ravitos (fin de chaque étape, sauf la dernière)
-  const ravitoPositions = steps
-    .slice(0, steps.length - 1)
-    .map((step) => [step.end_lat, step.end_lng] as [number, number]);
 
   return (
     <MapContainer
@@ -210,19 +214,13 @@ export default function UltraMap({
           icon={createEmojiIcon("🔴")}
         />
       )}
-
-      {/* Points de ravitaillement */}
-      {ravitoPositions.map((pos, idx) => (
-        <Marker
-          key={`ravito-${idx}`}
-          position={pos}
-          icon={createEmojiIcon("🥤")}
-        />
-      ))}
-
       {/* Waypoints avec des markers */}
       {waypoints.map((waypoint) => {
-        const eta = getEtaForWaypoint(waypoint);
+        const eta = getEtaForWaypoint({
+          waypoint,
+          validTrackpoints,
+          liveTrackData,
+        });
         const mapsLink =
           waypoint.lat != null && waypoint.lng != null
             ? `geo:${waypoint.lat},${waypoint.lng}`
@@ -231,7 +229,7 @@ export default function UltraMap({
           <Marker
             key={waypoint.id}
             position={[waypoint.lat ?? 0, waypoint.lng ?? 0]}
-            icon={createEmojiIcon("📍")}
+            icon={createEmojiIcon(waypoint.is_ravito ? "🥤" : "📍")}
           >
             <Popup>
               <div className="space-y-1 text-sm">

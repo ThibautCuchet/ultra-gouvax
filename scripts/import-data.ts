@@ -155,7 +155,7 @@ async function importWaypoints() {
   const csvPath = path.join(
     "src",
     "ressources",
-    "Coordonn_es_avec_RAVITO_4.csv"
+    "Coordonn_es__nouveau_fichier_.csv"
   );
   const waypoints = await parseWaypoints(csvPath);
   const { error } = await supabase.from("waypoints").insert(waypoints);
@@ -295,20 +295,20 @@ async function main() {
   // Import waypoints
   await importWaypoints();
 
-  // Parse steps CSV data
-  const stepsCSVPath = path.join("src", "ressources", "steps.csv");
-  const stepsData = await parseStepsCSV(stepsCSVPath);
-  console.log(`Loaded ${stepsData.length} steps from CSV`);
+  // // Parse steps CSV data
+  // const stepsCSVPath = path.join("src", "ressources", "steps.csv");
+  // const stepsData = await parseStepsCSV(stepsCSVPath);
+  // console.log(`Loaded ${stepsData.length} steps from CSV`);
 
-  // Import GPX data using CSV data
-  const gpxPath = path.join("src", "ressources", "gpx"); // Adjust this path as needed
+  // // Import GPX data using CSV data
+  // const gpxPath = path.join("src", "ressources", "gpx"); // Adjust this path as needed
 
-  try {
-    await importGPXData(gpxPath, stepsData);
-    console.log("Data import completed successfully!");
-  } catch (error) {
-    console.error("Error during GPX import:", error);
-  }
+  // try {
+  //   await importGPXData(gpxPath, stepsData);
+  //   console.log("Data import completed successfully!");
+  // } catch (error) {
+  //   console.error("Error during GPX import:", error);
+  // }
 }
 
 main().catch((err) => {
