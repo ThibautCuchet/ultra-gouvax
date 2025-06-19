@@ -7,7 +7,7 @@ export async function getData() {
   const [waypoints, steps, trackpoints, liveTrackConfig] = await Promise.all([
     supabase.from("waypoints").select("*"),
     supabase.from("steps").select("*"),
-    supabase.from("trackpoints").select("*"),
+    supabase.from("trackpoints").select("*").order("time", { ascending: true }),
     getLiveTrackConfig(),
   ]);
 
