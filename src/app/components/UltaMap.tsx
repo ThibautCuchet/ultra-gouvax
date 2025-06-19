@@ -13,6 +13,8 @@ import L from "leaflet";
 import { TrackPoint } from "@/lib/useLiveTrack";
 import { findClosestTrackPoint } from "@/lib/calculate";
 import { format } from "date-fns";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 import UserLocationLayer from "./UserLocationLayer";
 
 // Simple emoji based icon generator
@@ -96,6 +98,8 @@ export default function UltraMap({
   liveTrackLoading = false,
   isFetching = false,
 }: UltraMapProps) {
+  const [copiedWaypointId, setCopiedWaypointId] =
+    useState<Waypoint["id"] | null>(null);
   // Convertir les trackpoints en positions pour la polyline
   const validTrackpoints = trackpoints.filter(
     (trackpoint) => trackpoint.lat && trackpoint.lng
@@ -223,7 +227,7 @@ export default function UltraMap({
           });
           const mapsLink =
             waypoint.lat != null && waypoint.lng != null
-              ? `geo:${waypoint.lat},${waypoint.lng}`
+              ? `https://www.google.com/maps/dir/?api=1&destination=${waypoint.lat},${waypoint.lng}`
               : null;
           return (
             <Marker
@@ -242,7 +246,7 @@ export default function UltraMap({
                   {waypoint.km !== null && <div>{waypoint.km} km</div>}
                   {eta && <div>ETA : {eta}</div>}
                   {mapsLink && (
-                    <div className="pt-1">
+                    <div className="pt-1 space-y-1">
                       <a
                         href={mapsLink}
                         target="_blank"
@@ -251,6 +255,31 @@ export default function UltraMap({
                       >
                         <span>🗺️</span> Itinéraire
                       </a>
+                      <div className="flex items-center gap-1">
+                        <span>
+                          {waypoint.lat?.toFixed(5)}, {waypoint.lng?.toFixed(5)}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `${waypoint.lat},${waypoint.lng}`
+                            );
+                            setCopiedWaypointId(waypoint.id);
+                            setTimeout(() => setCopiedWaypointId(null), 1500);
+                          }}
+                          className="text-blue-600"
+                          aria-label="Copier les coordonnées"
+                        >
+                          {copiedWaypointId === waypoint.id ? (
+                            <Check className="w-4 h-4 text-green-600 animate-bounce" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                        {copiedWaypointId === waypoint.id && (
+                          <span className="text-green-600 text-xs">Copié !</span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
