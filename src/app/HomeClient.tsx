@@ -9,6 +9,7 @@ import {
 import UltraMap from "./components/UltaMap";
 import UltraStats from "./components/UltraStats";
 import LiveStats from "./components/LiveStats";
+import RavitoList from "./components/RavitoList";
 import { useLiveTrack } from "@/lib/useLiveTrack";
 import { useEffect, useMemo, useState } from "react";
 import { findClosestTrackPoint, calculateProgress } from "@/lib/calculate";
@@ -67,10 +68,12 @@ export default function HomeClient({
     0
   );
 
+  const ravitos = waypoints.filter((wp) => wp.is_ravito);
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-8">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <header className="text-center">
           <h1 className="text-4xl font-bold text-primary mb-2">
             🏃‍♂️ Ultra Hoeilaart-Gouvy
           </h1>
@@ -84,40 +87,40 @@ export default function HomeClient({
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold mb-4">
-                🗺️ Carte en temps réel
-              </h2>
-              <div className="h-96 w-full rounded-lg overflow-hidden border relative">
-                <UltraMap
-                  waypoints={waypoints}
-                  trackpoints={trackpoints}
-                  liveTrackData={liveTrackData || undefined}
-                  isConnected={isConnected}
-                  liveTrackLoading={liveTrackLoading}
-                  isFetching={isFetching}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="lg:col-span-1 space-y-6">
-            <UltraStats progress={progress} />
-            <LiveStats
-              fitnessData={
-                liveTrackData?.trackPoints?.[
-                  liveTrackData.trackPoints.length - 1
-                ]?.fitnessPointData
-              }
+        <UltraStats progress={progress} />
+
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">🗺️ Carte en temps réel</h2>
+          <div className="w-full h-[28rem] sm:h-[32rem] rounded-lg overflow-hidden border relative">
+            <UltraMap
+              waypoints={waypoints}
+              trackpoints={trackpoints}
+              liveTrackData={liveTrackData || undefined}
               isConnected={isConnected}
-              loading={liveTrackLoading}
+              liveTrackLoading={liveTrackLoading}
               isFetching={isFetching}
             />
           </div>
         </div>
 
-        <footer className="mt-12 text-center text-sm text-muted-foreground border-t pt-8">
+        <LiveStats
+          fitnessData={
+            liveTrackData?.trackPoints?.[
+              liveTrackData.trackPoints.length - 1
+            ]?.fitnessPointData
+          }
+          isConnected={isConnected}
+          loading={liveTrackLoading}
+          isFetching={isFetching}
+        />
+
+        <RavitoList
+          ravitos={ravitos}
+          trackpoints={trackpoints}
+          liveTrackData={liveTrackData || undefined}
+        />
+
+        <footer className="text-center text-sm text-muted-foreground border-t pt-8">
           <p>
             🚀 Application de suivi ultra créée avec Next.js, Leaflet et
             beaucoup d&apos;amour
