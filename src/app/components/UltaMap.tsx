@@ -1,12 +1,13 @@
 "use client";
 
-import { Trackpoint, Waypoint, Step } from "@/lib/database.types";
+import { Trackpoint, Waypoint } from "@/lib/database.types";
 import {
   MapContainer,
   Marker,
   TileLayer,
   Polyline,
   Popup,
+  Pane,
 } from "react-leaflet";
 import L from "leaflet";
 import { TrackPoint } from "@/lib/useLiveTrack";
@@ -26,7 +27,6 @@ const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
 
 interface UltraMapProps {
   waypoints: Waypoint[];
-  steps: Step[];
   trackpoints: Trackpoint[];
   liveTrackData?: {
     trackPoints: TrackPoint[];
@@ -84,7 +84,6 @@ function getEtaForWaypoint({
 
 export default function UltraMap({
   waypoints,
-  steps,
   trackpoints,
   liveTrackData,
   isConnected = false,
@@ -137,28 +136,32 @@ export default function UltraMap({
       />
 
       {/* Tracé GPX historique */}
-      {trackPositions.length > 0 && (
-        <Polyline
-          positions={trackPositions}
-          pathOptions={{
-            color: "#3388ff",
-            weight: 3,
-            opacity: 0.6,
-          }}
-        />
-      )}
+      <Pane name="gpx" style={{ zIndex: 400 }}>
+        {trackPositions.length > 0 && (
+          <Polyline
+            positions={trackPositions}
+            pathOptions={{
+              color: "#3388ff",
+              weight: 3,
+              opacity: 0.6,
+            }}
+          />
+        )}
+      </Pane>
 
       {/* Tracé en temps réel */}
-      {liveTrackPositions.length > 0 && (
-        <Polyline
-          positions={liveTrackPositions}
-          pathOptions={{
-            color: "#ff4444",
-            weight: 4,
-            opacity: 0.9,
-          }}
-        />
-      )}
+      <Pane name="liveTrack" style={{ zIndex: 410 }}>
+        {liveTrackPositions.length > 0 && (
+          <Polyline
+            positions={liveTrackPositions}
+            pathOptions={{
+              color: "#ff4444",
+              weight: 4,
+              opacity: 0.9,
+            }}
+          />
+        )}
+      </Pane>
 
       {/* Indicateur de statut LiveTrack */}
       {liveTrackData && (
@@ -188,73 +191,78 @@ export default function UltraMap({
         </div>
       )}
 
-      {/* Marqueur de départ */}
-      {startPoint && (
-        <Marker
-          position={[startPoint.lat!, startPoint.lng!]}
-          icon={createEmojiIcon("🚩")}
-        />
-      )}
-
-      {/* Marqueur d'arrivée */}
-      {endPoint && startPoint !== endPoint && (
-        <Marker
-          position={[endPoint.lat!, endPoint.lng!]}
-          icon={createEmojiIcon("🏁")}
-        />
-      )}
-
-      {/* Position actuelle en temps réel */}
-      {currentPosition && (
-        <Marker
-          position={[
-            currentPosition.position.lat,
-            currentPosition.position.lon,
-          ]}
-          icon={createEmojiIcon("🔴")}
-        />
-      )}
-      {/* Waypoints avec des markers */}
-      {waypoints.map((waypoint) => {
-        const eta = getEtaForWaypoint({
-          waypoint,
-          validTrackpoints,
-          liveTrackData,
-        });
-        const mapsLink =
-          waypoint.lat != null && waypoint.lng != null
-            ? `geo:${waypoint.lat},${waypoint.lng}`
-            : null;
-        return (
+      <Pane name="waypoints" style={{ zIndex: 420 }}>
+        {/* Marqueur de départ */}
+        {startPoint && (
           <Marker
-            key={waypoint.id}
-            position={[waypoint.lat ?? 0, waypoint.lng ?? 0]}
-            icon={createEmojiIcon(waypoint.is_ravito ? "🥤" : "📍")}
-          >
-            <Popup>
-              <div className="space-y-1 text-sm">
-                {waypoint.name && (
-                  <div className="font-semibold">{waypoint.name}</div>
-                )}
-                {waypoint.km !== null && <div>{waypoint.km} km</div>}
-                {eta && <div>ETA : {eta}</div>}
-                {mapsLink && (
-                  <div className="pt-1">
-                    <a
-                      href={mapsLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-blue-600 underline"
-                    >
-                      <span>🗺️</span> Itinéraire
-                    </a>
-                  </div>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        );
-      })}
+            position={[startPoint.lat!, startPoint.lng!]}
+            icon={createEmojiIcon("🚩")}
+          />
+        )}
+
+        {/* Marqueur d'arrivée */}
+        {endPoint && startPoint !== endPoint && (
+          <Marker
+            position={[endPoint.lat!, endPoint.lng!]}
+            icon={createEmojiIcon("🏁")}
+          />
+        )}
+
+        {/* Waypoints avec des markers */}
+        {waypoints.map((waypoint) => {
+          const eta = getEtaForWaypoint({
+            waypoint,
+            validTrackpoints,
+            liveTrackData,
+          });
+          const mapsLink =
+            waypoint.lat != null && waypoint.lng != null
+              ? `geo:${waypoint.lat},${waypoint.lng}`
+              : null;
+          return (
+            <Marker
+              key={waypoint.id}
+              position={[waypoint.lat ?? 0, waypoint.lng ?? 0]}
+              icon={createEmojiIcon(waypoint.is_ravito ? "🥤" : "📍")}
+            >
+              <Popup>
+                <div className="space-y-1 text-sm">
+                  {waypoint.name && (
+                    <div className="font-semibold">{waypoint.name}</div>
+                  )}
+                  {waypoint.km !== null && <div>{waypoint.km} km</div>}
+                  {eta && <div>ETA : {eta}</div>}
+                  {mapsLink && (
+                    <div className="pt-1">
+                      <a
+                        href={mapsLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-blue-600 underline"
+                      >
+                        <span>🗺️</span> Itinéraire
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+      </Pane>
+
+      <Pane name="liveTrackPoint" style={{ zIndex: 430 }}>
+        {/* Position actuelle en temps réel */}
+        {currentPosition && (
+          <Marker
+            position={[
+              currentPosition.position.lat,
+              currentPosition.position.lon,
+            ]}
+            icon={createEmojiIcon("🔴")}
+          />
+        )}
+      </Pane>
     </MapContainer>
   );
 }
