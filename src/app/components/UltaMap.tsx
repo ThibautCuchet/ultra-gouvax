@@ -13,7 +13,8 @@ import L from "leaflet";
 import { TrackPoint } from "@/lib/useLiveTrack";
 import { findClosestTrackPoint } from "@/lib/calculate";
 import { format } from "date-fns";
-import { Copy } from "lucide-react";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 
 // Simple emoji based icon generator
 const createEmojiIcon = (emoji: string, size: [number, number] = [30, 30]) => {
@@ -96,6 +97,21 @@ export default function UltraMap({
   liveTrackLoading = false,
   isFetching = false,
 }: UltraMapProps) {
+  const [copiedWaypointId, setCopiedWaypointId] = useState<string | null>(null);
+
+  const playBeep = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      oscillator.connect(ctx.destination);
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.15);
+    } catch {
+      /* noop */
+    }
+  };
   // Convertir les trackpoints en positions pour la polyline
   const validTrackpoints = trackpoints.filter(
     (trackpoint) => trackpoint.lat && trackpoint.lng
@@ -256,16 +272,26 @@ export default function UltraMap({
                           {waypoint.lat?.toFixed(5)}, {waypoint.lng?.toFixed(5)}
                         </span>
                         <button
-                          onClick={() =>
+                          onClick={() => {
                             navigator.clipboard.writeText(
                               `${waypoint.lat},${waypoint.lng}`
-                            )
-                          }
+                            );
+                            playBeep();
+                            setCopiedWaypointId(waypoint.id);
+                            setTimeout(() => setCopiedWaypointId(null), 1500);
+                          }}
                           className="text-blue-600"
                           aria-label="Copier les coordonnées"
                         >
-                          <Copy className="w-4 h-4" />
+                          {copiedWaypointId === waypoint.id ? (
+                            <Check className="w-4 h-4 text-green-600 animate-bounce" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
                         </button>
+                        {copiedWaypointId === waypoint.id && (
+                          <span className="text-green-600 text-xs">Copié !</span>
+                        )}
                       </div>
                     </div>
                   )}

@@ -125,3 +125,14 @@
 /* Ensure waypoint popups stay on top */
 .leaflet-popup { z-index: 10000 !important; }
 
+/* Improve overall popup look */
+.leaflet-popup-content-wrapper {
+  background: var(--popover);
+  color: var(--popover-foreground);
+  @apply rounded-lg border border-border shadow-lg px-3 py-2 text-sm;
+}
+.leaflet-popup-tip {
+  background: var(--popover);
+  border: 1px solid var(--border);
+}
+
