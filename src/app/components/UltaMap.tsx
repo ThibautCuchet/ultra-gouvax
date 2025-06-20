@@ -5,7 +5,6 @@ import {
   MapContainer,
   Marker,
   TileLayer,
-  Polyline,
   Popup,
   Pane,
 } from "react-leaflet";
@@ -14,7 +13,8 @@ import { TrackPoint } from "@/lib/useLiveTrack";
 import { findClosestTrackPoint } from "@/lib/calculate";
 import { format } from "date-fns";
 import { Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useCurrentLocation } from "@/lib/useCurrentLocation";
 import UserLocationLayer from "./UserLocationLayer";
 import GPXPane from "./panes/GPXPane";
 import LiveTrackPane from "./panes/LiveTrackPane";
@@ -102,6 +102,23 @@ export default function UltraMap({
 }: UltraMapProps) {
   const [copiedWaypointId, setCopiedWaypointId] =
     useState<Waypoint["id"] | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const { position: userPosition } = useCurrentLocation();
+
+  function centerOnUser() {
+    if (mapRef.current && userPosition) {
+      mapRef.current.setView([userPosition.lat, userPosition.lng]);
+    }
+  }
+
+  function centerOnRunner() {
+    if (mapRef.current && currentPosition) {
+      mapRef.current.setView([
+        currentPosition.position.lat,
+        currentPosition.position.lon,
+      ]);
+    }
+  }
   // Convertir les trackpoints en positions pour la polyline
   const validTrackpoints = trackpoints.filter(
     (trackpoint) => trackpoint.lat && trackpoint.lng
@@ -111,21 +128,6 @@ export default function UltraMap({
     (trackpoint) => [trackpoint.lat!, trackpoint.lng!] as [number, number]
   );
 
-  // Convertir les données LiveTrack en positions
-  const liveTrackPositions =
-    liveTrackData?.trackPoints?.map(
-      (point: TrackPoint) =>
-        [point.position.lat, point.position.lon] as [number, number]
-    ) || [];
-
-  // Points de départ et d'arrivée (prioriser les données en temps réel)
-  const allValidPoints = [
-    ...validTrackpoints,
-    ...(liveTrackData?.trackPoints?.map((point: TrackPoint) => ({
-      lat: point.position.lat,
-      lng: point.position.lon,
-    })) || []),
-  ];
 
   const startPoint = trackPositions.at(0);
   const endPoint = trackPositions.at(-1);
@@ -141,6 +143,7 @@ export default function UltraMap({
       zoom={9}
       scrollWheelZoom={true}
       className="w-full h-full"
+      ref={mapRef}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -295,6 +298,28 @@ export default function UltraMap({
 
       {/* Localisation de l'utilisateur */}
       <UserLocationLayer />
+
+      {/* Boutons de recentrage */}
+      <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
+        {userPosition && (
+          <button
+            onClick={centerOnUser}
+            className="bg-white rounded-full p-2 shadow"
+            aria-label="Centrer sur moi"
+          >
+            📍
+          </button>
+        )}
+        {currentPosition && (
+          <button
+            onClick={centerOnRunner}
+            className="bg-white rounded-full p-2 shadow"
+            aria-label="Centrer sur le coureur"
+          >
+            🏃
+          </button>
+        )}
+      </div>
     </MapContainer>
   );
 }
