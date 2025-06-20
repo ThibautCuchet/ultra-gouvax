@@ -143,7 +143,7 @@ export default function UltraMap({
       zoom={9}
       scrollWheelZoom={true}
       className="w-full h-full"
-      whenCreated={(map) => (mapRef.current = map)}
+      ref={mapRef}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
