@@ -1,3 +1,6 @@
+import { TrackPoint } from "@/lib/useLiveTrack";
+import { Pane, Polyline } from "react-leaflet";
+
 type LiveTrackPaneProps = {
     liveTrackData?: {
         trackPoints: TrackPoint[];

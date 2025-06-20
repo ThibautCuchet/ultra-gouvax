@@ -10,7 +10,7 @@ type GPXPaneProps = {
 export default function GPXPane({
     trackpoints
 }: GPXPaneProps) {
-    const trackPositions = trackpoints.map((point) => [point.lat!, point.lng!] as const);
+    const trackPositions = trackpoints.map((point) => [point.lat!, point.lng!] as [number, number]);
     return (
         <Pane name="gpx" style={{ zIndex: 400 }}>
         {trackPositions.length > 0 && (
