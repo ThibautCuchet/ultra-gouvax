@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
 import Script from "next/script";
+import SwRegister from "./sw-register";
 
 export const metadata: Metadata = {
   title: "Ultra Gouvax",
@@ -25,9 +26,14 @@ export default function RootLayout({
           rel="icon"
           href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><text y=%2218%22 font-size=%2220%22>🏃</text></svg>"
         />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#ffffff" />
       </head>
       <body className="antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <SwRegister />
+        </Providers>
       </body>
     </html>
   );
