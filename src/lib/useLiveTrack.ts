@@ -32,7 +32,7 @@ interface LiveTrackData {
   sessionId: string;
 }
 
-interface LiveTrackParams {
+export interface LiveTrackParams {
   sessionId: string;
   token: string;
 }
@@ -95,7 +95,7 @@ export function parseLiveTrackUrl(url: string): LiveTrackParams | null {
 }
 
 // Fonction pour récupérer les données LiveTrack
-async function fetchLiveTrackData(
+export async function fetchLiveTrackData(
   params: LiveTrackParams
 ): Promise<LiveTrackData> {
   const response = await fetch(GARMIN_GRAPHQL_URL, {
