@@ -5,7 +5,6 @@ import {
   MapContainer,
   Marker,
   TileLayer,
-  Polyline,
   Popup,
   Pane,
 } from "react-leaflet";
@@ -16,6 +15,7 @@ import { format } from "date-fns";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import UserLocationLayer from "./UserLocationLayer";
+import SharedLocationsLayer from "./SharedLocationsLayer";
 import GPXPane from "./panes/GPXPane";
 import LiveTrackPane from "./panes/LiveTrackPane";
 
@@ -45,6 +45,7 @@ interface UltraMapProps {
   isConnected?: boolean;
   liveTrackLoading?: boolean;
   isFetching?: boolean;
+  shareEnabled?: boolean;
 }
 
 function getEtaForWaypoint({
@@ -99,6 +100,7 @@ export default function UltraMap({
   isConnected = false,
   liveTrackLoading = false,
   isFetching = false,
+  shareEnabled = false,
 }: UltraMapProps) {
   const [copiedWaypointId, setCopiedWaypointId] =
     useState<Waypoint["id"] | null>(null);
@@ -112,20 +114,6 @@ export default function UltraMap({
   );
 
   // Convertir les données LiveTrack en positions
-  const liveTrackPositions =
-    liveTrackData?.trackPoints?.map(
-      (point: TrackPoint) =>
-        [point.position.lat, point.position.lon] as [number, number]
-    ) || [];
-
-  // Points de départ et d'arrivée (prioriser les données en temps réel)
-  const allValidPoints = [
-    ...validTrackpoints,
-    ...(liveTrackData?.trackPoints?.map((point: TrackPoint) => ({
-      lat: point.position.lat,
-      lng: point.position.lon,
-    })) || []),
-  ];
 
   const startPoint = trackPositions.at(0);
   const endPoint = trackPositions.at(-1);
@@ -295,6 +283,9 @@ export default function UltraMap({
 
       {/* Localisation de l'utilisateur */}
       <UserLocationLayer />
+
+      {/* Localisations partagées des autres utilisateurs */}
+      <SharedLocationsLayer enabled={shareEnabled} />
     </MapContainer>
   );
 }

@@ -36,6 +36,7 @@ export default function HomeClient({
   } = useLiveTrack(liveTrackConfig?.live_track_url ?? null);
 
   const [progress, setProgress] = useState(0);
+  const [shareEnabled, setShareEnabled] = useState(false);
 
   const validTrackpoints = useMemo(
     () => trackpoints.filter((tp) => tp.lat !== null && tp.lng !== null),
@@ -92,6 +93,12 @@ export default function HomeClient({
         <div>
           <h2 className="text-2xl font-semibold mb-4">🗺️ Carte en temps réel</h2>
           <div className="w-full h-[28rem] sm:h-[32rem] rounded-lg overflow-hidden border relative">
+            <button
+              onClick={() => setShareEnabled((v) => !v)}
+              className="absolute z-[1000] top-2 left-2 bg-white text-sm px-3 py-1 rounded shadow"
+            >
+              {shareEnabled ? "Stop partage" : "Partager ma position"}
+            </button>
             <UltraMap
               waypoints={waypoints}
               trackpoints={trackpoints}
@@ -99,6 +106,7 @@ export default function HomeClient({
               isConnected={isConnected}
               liveTrackLoading={liveTrackLoading}
               isFetching={isFetching}
+              shareEnabled={shareEnabled}
             />
           </div>
         </div>
