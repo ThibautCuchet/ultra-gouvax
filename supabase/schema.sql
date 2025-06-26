@@ -8,15 +8,14 @@ create table if not exists waypoints (
   is_ravito boolean default false
 );
 
--- Table storing GPX trackpoints for each file
+-- Table storing GPX trackpoints
 create table if not exists trackpoints (
   id bigserial primary key,
-  gpx_filename text not null,
   lat numeric,
   lng numeric,
   elevation numeric,
   time timestamptz,
-  step_id integer references steps(id)
+  distance_km numeric default 0
 );
 
 -- Table storing step information
@@ -30,7 +29,6 @@ create table if not exists steps (
   distance_km numeric,
   elevation_gain_m numeric,
   estimated_duration_minutes integer,
-  gpx_file_key text not null,
   created_at timestamptz default now()
 );
 

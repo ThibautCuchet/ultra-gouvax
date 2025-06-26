@@ -1,23 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { type Waypoint, type Trackpoint } from "../src/lib/database.types";
+import {
+  type Waypoint,
+  type Trackpoint,
+  Step,
+} from "../src/lib/database.types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const supabase = createClient(supabaseUrl, serviceKey);
-
-interface Step {
-  start_lat: number;
-  start_lng: number;
-  end_lat: number;
-  end_lng: number;
-  departure_time?: string;
-  distance_km?: number;
-  elevation_gain_m?: number;
-  estimated_duration_minutes?: number;
-  gpx_file_key: string;
-}
 
 interface StepData {
   index: number;
@@ -29,11 +21,6 @@ interface StepData {
   distance_km: number;
   elevation_gain_m: number;
   estimated_duration_minutes: number;
-}
-
-interface TrackPointWithStep extends Trackpoint {
-  gpx_filename: string;
-  step_id: number | null;
 }
 
 async function parseWaypoints(filePath: string): Promise<Waypoint[]> {
@@ -75,13 +62,13 @@ async function parseStepsCSV(filePath: string): Promise<StepData[]> {
 async function parseGPX(
   filePath: string,
   filename: string
-): Promise<TrackPointWithStep[]> {
+): Promise<Trackpoint[]> {
   const gpxContent = await fs.readFile(filePath, "utf-8");
   const trkptRegex = /<trkpt lat="([^"]+)" lon="([^"]+)">/g;
   const eleRegex = /<ele>([^<]+)<\/ele>/g;
   const timeRegex = /<time>([^<]+)<\/time>/g;
 
-  const trackPoints: TrackPointWithStep[] = [];
+  const trackPoints: Trackpoint[] = [];
   let match: RegExpExecArray | null;
   const coords: Array<{ lat: number; lng: number }> = [];
 
@@ -98,22 +85,13 @@ async function parseGPX(
     match = eleRegex.exec(gpxContent);
   }
 
-  const times: Date[] = [];
-  match = timeRegex.exec(gpxContent);
-  while (match !== null) {
-    times.push(new Date(match[1]));
-    match = timeRegex.exec(gpxContent);
-  }
-
   for (let i = 0; i < coords.length; i++) {
     trackPoints.push({
       id: i,
       lat: coords[i].lat,
       lng: coords[i].lng,
       elevation: elevations[i] || null,
-      time: times[i]?.toISOString() || null,
-      gpx_filename: filename,
-      step_id: null,
+      distance_km: null,
     });
   }
 
@@ -139,24 +117,8 @@ function calculateDistance(
   return R * c;
 }
 
-function calculateElevationGain(trackPoints: TrackPointWithStep[]): number {
-  let totalGain = 0;
-  for (let i = 1; i < trackPoints.length; i++) {
-    const prevEle = trackPoints[i - 1].elevation || 0;
-    const currEle = trackPoints[i].elevation || 0;
-    if (currEle > prevEle) {
-      totalGain += currEle - prevEle;
-    }
-  }
-  return totalGain;
-}
-
 async function importWaypoints() {
-  const csvPath = path.join(
-    "src",
-    "ressources",
-    "Coordonn_es__nouveau_fichier_.csv"
-  );
+  const csvPath = path.join("src", "ressources", "coordonnees.csv");
   const waypoints = await parseWaypoints(csvPath);
   const { error } = await supabase.from("waypoints").insert(waypoints);
   if (error) {
@@ -166,54 +128,10 @@ async function importWaypoints() {
   }
 }
 
-async function importGPXData(gpxDirectoryPath: string, stepsData: StepData[]) {
-  const files = await fs.readdir(gpxDirectoryPath);
-  const gpxFiles = files.filter((file) => file.endsWith(".gpx"));
-
-  console.log(`Found ${gpxFiles.length} GPX files`);
-  console.log(`Found ${stepsData.length} steps in CSV`);
+async function importSteps(stepsData: StepData[]) {
+  console.log(`Importing ${stepsData.length} steps from CSV...`);
 
   for (const stepData of stepsData) {
-    // Look for GPX file matching this step (step_1.gpx for index 1, etc.)
-    const expectedGpxFile = `etape_${stepData.index}.gpx`;
-    const matchingGpxFile = gpxFiles.find((file) => file === expectedGpxFile);
-
-    if (!matchingGpxFile) {
-      console.log(`No GPX file found for step ${stepData.index}, skipping...`);
-      continue;
-    }
-
-    const filePath = path.join(gpxDirectoryPath, matchingGpxFile);
-
-    // Upload GPX file to Supabase Storage with normalized name
-    const normalizedFileName = `step_${stepData.index}.gpx`;
-    console.log(
-      `Uploading ${matchingGpxFile} as ${normalizedFileName} to Supabase Storage...`
-    );
-    const fileBuffer = await fs.readFile(filePath);
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("gpx-files")
-      .upload(`steps/${normalizedFileName}`, fileBuffer, {
-        contentType: "application/gpx+xml",
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error(`Error uploading ${matchingGpxFile}:`, uploadError);
-      continue;
-    }
-
-    console.log(
-      `Successfully uploaded ${matchingGpxFile} as ${normalizedFileName} to ${uploadData.path}`
-    );
-
-    const trackPoints = await parseGPX(filePath, normalizedFileName);
-
-    if (trackPoints.length === 0) {
-      console.log(`No trackpoints found in ${matchingGpxFile}`);
-      continue;
-    }
-
     // Convert time to full timestamp (assuming it's for the race day)
     const convertTimeToTimestamp = (
       time: string,
@@ -231,26 +149,22 @@ async function importGPXData(gpxDirectoryPath: string, stepsData: StepData[]) {
       return baseDate.toISOString();
     };
 
-    // Create step using CSV data instead of calculating from GPX
-    const step: Step = {
-      start_lat: stepData.start_lat,
-      start_lng: stepData.start_lng,
-      end_lat: stepData.end_lat,
-      end_lng: stepData.end_lng,
-      departure_time: convertTimeToTimestamp(
-        stepData.departure_time,
-        stepData.index
-      ),
-      distance_km: stepData.distance_km,
-      elevation_gain_m: stepData.elevation_gain_m,
-      estimated_duration_minutes: stepData.estimated_duration_minutes,
-      gpx_file_key: uploadData.path,
-    };
-
     // Insert step
     const { data: insertedStep, error: stepError } = await supabase
       .from("steps")
-      .insert(step)
+      .insert({
+        start_lat: stepData.start_lat,
+        start_lng: stepData.start_lng,
+        end_lat: stepData.end_lat,
+        end_lng: stepData.end_lng,
+        departure_time: convertTimeToTimestamp(
+          stepData.departure_time,
+          stepData.index
+        ),
+        distance_km: stepData.distance_km,
+        elevation_gain_m: stepData.elevation_gain_m,
+        estimated_duration_minutes: stepData.estimated_duration_minutes,
+      })
       .select()
       .single();
 
@@ -260,33 +174,85 @@ async function importGPXData(gpxDirectoryPath: string, stepsData: StepData[]) {
     }
 
     console.log(`Created step ${insertedStep.id} for step ${stepData.index}`);
+  }
+}
 
-    // Associate trackpoints with the step
-    const trackPointsWithStepId = trackPoints.map((point) => ({
-      ...point,
-      step_id: insertedStep.id,
-    }));
+async function importGPX(gpxFilePath: string) {
+  console.log(`Importing GPX file: ${gpxFilePath}`);
 
-    // Insert trackpoints in batches
-    const batchSize = 1000;
-    for (let i = 0; i < trackPointsWithStepId.length; i += batchSize) {
-      const batch = trackPointsWithStepId.slice(i, i + batchSize);
-      const { error: trackError } = await supabase
-        .from("trackpoints")
-        .insert(batch);
+  // Upload GPX file to Supabase Storage
+  const fileName = path.basename(gpxFilePath);
+  console.log(`Uploading ${fileName} to Supabase Storage...`);
 
-      if (trackError) {
-        console.error(
-          `Error inserting trackpoints batch ${i} for step ${stepData.index}:`,
-          trackError
-        );
+  const fileBuffer = await fs.readFile(gpxFilePath);
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from("gpx-files")
+    .upload(`track/${fileName}`, fileBuffer, {
+      contentType: "application/gpx+xml",
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error(`Error uploading ${fileName}:`, uploadError);
+    return;
+  }
+
+  console.log(`Successfully uploaded ${fileName} to ${uploadData.path}`);
+
+  // Parse GPX trackpoints
+  const trackPoints = await parseGPX(gpxFilePath, fileName);
+
+  if (trackPoints.length === 0) {
+    console.log(`No trackpoints found in ${fileName}`);
+    return;
+  }
+
+  // Calculate cumulative distance for each trackpoint
+  const trackPointsWithDistance = trackPoints.map((point, index) => {
+    let cumulativeDistance = 0;
+
+    // Calculate cumulative distance from start
+    if (
+      index > 0 &&
+      point.lat &&
+      point.lng &&
+      trackPoints[index - 1].lat &&
+      trackPoints[index - 1].lng
+    ) {
+      for (let i = 1; i <= index; i++) {
+        const prev = trackPoints[i - 1];
+        const curr = trackPoints[i];
+        if (prev.lat && prev.lng && curr.lat && curr.lng) {
+          cumulativeDistance += calculateDistance(
+            prev.lat,
+            prev.lng,
+            curr.lat,
+            curr.lng
+          );
+        }
       }
     }
 
-    console.log(
-      `Imported ${trackPointsWithStepId.length} trackpoints for step ${insertedStep.id}`
-    );
+    return {
+      ...point,
+      distance_km: cumulativeDistance,
+    };
+  });
+
+  // Insert trackpoints in batches
+  const batchSize = 1000;
+  for (let i = 0; i < trackPointsWithDistance.length; i += batchSize) {
+    const batch = trackPointsWithDistance.slice(i, i + batchSize);
+    const { error: trackError } = await supabase
+      .from("trackpoints")
+      .insert(batch);
+
+    if (trackError) {
+      console.error(`Error inserting trackpoints batch ${i}:`, trackError);
+    }
   }
+
+  console.log(`Imported ${trackPointsWithDistance.length} trackpoints`);
 }
 
 async function main() {
@@ -295,20 +261,23 @@ async function main() {
   // Import waypoints
   await importWaypoints();
 
-  // // Parse steps CSV data
-  // const stepsCSVPath = path.join("src", "ressources", "steps.csv");
-  // const stepsData = await parseStepsCSV(stepsCSVPath);
-  // console.log(`Loaded ${stepsData.length} steps from CSV`);
+  // Parse steps CSV data
+  const stepsCSVPath = path.join("src", "ressources", "steps.csv");
+  const stepsData = await parseStepsCSV(stepsCSVPath);
+  console.log(`Loaded ${stepsData.length} steps from CSV`);
 
-  // // Import GPX data using CSV data
-  // const gpxPath = path.join("src", "ressources", "gpx"); // Adjust this path as needed
+  // Import steps from CSV data
+  await importSteps(stepsData);
 
-  // try {
-  //   await importGPXData(gpxPath, stepsData);
-  //   console.log("Data import completed successfully!");
-  // } catch (error) {
-  //   console.error("Error during GPX import:", error);
-  // }
+  // Import the single GPX file
+  const gpxFilePath = path.join("src", "ressources", "track.gpx"); // Adjust filename as needed
+
+  try {
+    await importGPX(gpxFilePath);
+    console.log("Data import completed successfully!");
+  } catch (error) {
+    console.error("Error during import:", error);
+  }
 }
 
 main().catch((err) => {

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
-import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Ultra Gouvax",
@@ -16,11 +15,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <Script
-          src="//unpkg.com/react-scan/dist/auto.global.js"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-        />
         <link
           rel="icon"
           href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><text y=%2218%22 font-size=%2220%22>🏃</text></svg>"

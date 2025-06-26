@@ -42,7 +42,6 @@ export type Database = {
           end_lat: number;
           end_lng: number;
           estimated_duration_minutes: number | null;
-          gpx_file_key: string;
           id: number;
           start_lat: number;
           start_lng: number;
@@ -55,7 +54,6 @@ export type Database = {
           end_lat: number;
           end_lng: number;
           estimated_duration_minutes?: number | null;
-          gpx_file_key: string;
           id?: number;
           start_lat: number;
           start_lng: number;
@@ -68,7 +66,6 @@ export type Database = {
           end_lat?: number;
           end_lng?: number;
           estimated_duration_minutes?: number | null;
-          gpx_file_key?: string;
           id?: number;
           start_lat?: number;
           start_lng?: number;
@@ -77,41 +74,27 @@ export type Database = {
       };
       trackpoints: {
         Row: {
+          distance_km: number | null;
           elevation: number | null;
-          gpx_filename: string;
           id: number;
           lat: number | null;
           lng: number | null;
-          step_id: number | null;
-          time: string | null;
         };
         Insert: {
+          distance_km?: number | null;
           elevation?: number | null;
-          gpx_filename: string;
           id?: number;
           lat?: number | null;
           lng?: number | null;
-          step_id?: number | null;
-          time?: string | null;
         };
         Update: {
+          distance_km?: number | null;
           elevation?: number | null;
-          gpx_filename?: string;
           id?: number;
           lat?: number | null;
           lng?: number | null;
-          step_id?: number | null;
-          time?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: "trackpoints_step_id_fkey";
-            columns: ["step_id"];
-            isOneToOne: false;
-            referencedRelation: "steps";
-            referencedColumns: ["id"];
-          }
-        ];
+        Relationships: [];
       };
       waypoints: {
         Row: {
