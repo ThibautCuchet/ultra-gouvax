@@ -28,7 +28,7 @@ export default function HomeClient({
   liveTrackConfig,
 }: HomeClientProps) {
   // Hook pour les données LiveTrack
-  const { 
+  const {
     data: liveTrackData,
     loading: liveTrackLoading,
     isConnected,
@@ -58,10 +58,7 @@ export default function HomeClient({
     }
   }, [liveTrackData, validTrackpoints]);
 
-  const totalDistance = steps.reduce(
-    (acc, step) => acc + (step.distance_km ?? 0),
-    0
-  );
+  const totalDistance = trackpoints.at(-1)?.distance_km ?? 0;
 
   const totalElevation = steps.reduce(
     (acc, step) => acc + (step.elevation_gain_m ?? 0),
@@ -90,7 +87,9 @@ export default function HomeClient({
         <UltraStats progress={progress} />
 
         <div>
-          <h2 className="text-2xl font-semibold mb-4">🗺️ Carte en temps réel</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            🗺️ Carte en temps réel
+          </h2>
           <div className="w-full h-[28rem] sm:h-[32rem] rounded-lg overflow-hidden border relative">
             <UltraMap
               waypoints={waypoints}
@@ -105,9 +104,8 @@ export default function HomeClient({
 
         <LiveStats
           fitnessData={
-            liveTrackData?.trackPoints?.[
-              liveTrackData.trackPoints.length - 1
-            ]?.fitnessPointData
+            liveTrackData?.trackPoints?.[liveTrackData.trackPoints.length - 1]
+              ?.fitnessPointData
           }
           isConnected={isConnected}
           loading={liveTrackLoading}

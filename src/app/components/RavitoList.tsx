@@ -27,34 +27,50 @@ function getEtaForWaypoint({
     !liveTrackData ||
     liveTrackData.trackPoints.length === 0 ||
     waypoint.lat == null ||
-    waypoint.lng == null
+    waypoint.lng == null ||
+    waypoint.km == null
   ) {
     return null;
   }
 
+  // Trouver le trackpoint le plus proche du waypoint cible
   const target = findClosestTrackPoint(
     { lat: waypoint.lat, lng: waypoint.lng },
     validTrackpoints
   );
-  if (!target || !target.point.time) {
+  if (!target || !target.point || target.point.distance_km == null) {
     return null;
   }
 
-  const lastLive = liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1];
+  // Trouver le trackpoint le plus proche de la position actuelle du coureur
+  const lastLive =
+    liveTrackData.trackPoints[liveTrackData.trackPoints.length - 1];
   const current = findClosestTrackPoint(
     { lat: lastLive.position.lat, lng: lastLive.position.lon },
     validTrackpoints
   );
-  if (!current || !current.point.time) {
+  if (!current || !current.point || current.point.distance_km == null) {
     return null;
   }
 
-  const scheduledCurrent = new Date(current.point.time).getTime();
-  const scheduledTarget = new Date(target.point.time).getTime();
-  const actualCurrent = new Date(lastLive.dateTime).getTime();
+  // Calculer la distance restante à parcourir
+  const currentDistance = current.point.distance_km;
+  const targetDistance = target.point.distance_km;
+  const remainingDistance = targetDistance - currentDistance;
 
-  const offset = actualCurrent - scheduledCurrent;
-  const etaDate = new Date(scheduledTarget + offset);
+  // Si le waypoint est déjà dépassé, ne pas afficher d'ETA
+  if (remainingDistance <= 0) {
+    return null;
+  }
+
+  // Vitesse moyenne : 7:45 min/km = 7.75 minutes par km
+  const avgSpeedMinPerKm = 7.75;
+  const estimatedTimeMinutes = remainingDistance * avgSpeedMinPerKm;
+
+  // Calculer l'heure d'arrivée estimée
+  const now = new Date(lastLive.dateTime);
+  const etaDate = new Date(now.getTime() + estimatedTimeMinutes * 60 * 1000);
+
   return format(etaDate, "HH:mm");
 }
 
