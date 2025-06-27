@@ -110,7 +110,7 @@ export default function RavitoList({
                 <div className="text-sm text-muted-foreground">
                   {ravito.km != null && `${ravito.km} km`}
                   {departureTime && ` · Départ prévu ${departureTime}`}
-                  {initialEta && ` · ETA initial ${initialEta}`}
+                  {!eta && initialEta && ` · ETA initial ${initialEta}`}
                   {eta && ` · ETA live ${eta}`}
                 </div>
               </div>

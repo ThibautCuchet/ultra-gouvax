@@ -126,7 +126,7 @@ export default function WaypointMarker({
             <div className="font-semibold">{waypoint.name}</div>
           )}
           {waypoint.km !== null && <div>{waypoint.km} km</div>}
-          {initialEta && <div>ETA initial : {initialEta}</div>}
+          {!eta && initialEta && <div>ETA initial : {initialEta}</div>}
           {waypoint.is_ravito && departureTime && (
             <div>Départ prévu : {departureTime}</div>
           )}
