@@ -10,6 +10,7 @@ import UltraMap from "./components/UltaMap";
 import UltraStats from "./components/UltraStats";
 import LiveStats from "./components/LiveStats";
 import RavitoList from "./components/RavitoList";
+import CountdownTimer from "./components/CountdownTimer";
 import { useLiveTrack } from "@/lib/useLiveTrack";
 import { useEffect, useMemo, useState } from "react";
 import { findClosestTrackPoint, calculateProgress } from "@/lib/calculate";
@@ -83,6 +84,8 @@ export default function HomeClient({
             <div>🕒 {steps.length} étapes</div>
           </div>
         </header>
+
+        <CountdownTimer />
 
         <UltraStats progress={progress} />
 
