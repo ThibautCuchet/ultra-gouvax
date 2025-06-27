@@ -99,7 +99,7 @@ export default function HomeClient({
           </div>
         </header>
 
-        <CountdownTimer />
+        {/* <CountdownTimer /> */}
 
         <UltraStats progress={progress} />
 
