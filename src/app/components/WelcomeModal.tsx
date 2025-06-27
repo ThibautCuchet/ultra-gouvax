@@ -46,7 +46,7 @@ export default function WelcomeModal() {
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">🏃‍♂️</span>
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Défi Ultra Hoeilaart-Gouvy
+                    Défi Hoeilaart-Gouvy
                   </h2>
                 </div>
                 <button
