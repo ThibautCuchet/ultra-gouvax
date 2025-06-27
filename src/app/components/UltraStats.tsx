@@ -5,12 +5,11 @@ interface UltraStatsProps {
 }
 
 export default function UltraStats({ progress }: UltraStatsProps) {
-
   return (
     <div className="space-y-6">
       {/* Overall Progress */}
       <div className="bg-card p-6 rounded-lg border">
-        <h2 className="text-xl font-bold mb-4">🏃 Ultra Hoeilaart-Gouvy</h2>
+        <h2 className="text-xl font-bold mb-4">🏃 Hoeilaart-Gouvy</h2>
         <div className="space-y-4">
           <div>
             <div className="flex justify-between items-center mb-2">

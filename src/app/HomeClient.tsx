@@ -87,7 +87,7 @@ export default function HomeClient({
       <div className="container mx-auto px-4 py-8 space-y-8">
         <header className="text-center">
           <h1 className="text-4xl font-bold text-primary mb-2">
-            🏃‍♂️ Ultra Hoeilaart-Gouvy
+            🏃‍♂️ Hoeilaart-Gouvy
           </h1>
           <p className="text-xl text-muted-foreground">
             Suivi en temps réel de Charles
@@ -136,10 +136,6 @@ export default function HomeClient({
         />
 
         <footer className="text-center text-sm text-muted-foreground border-t pt-8">
-          <p>
-            🚀 Application de suivi ultra créée avec Next.js, Leaflet et
-            beaucoup d&apos;amour
-          </p>
           <p className="mt-2">💪 Allez Charles ! Tu peux le faire !</p>
         </footer>
       </div>
