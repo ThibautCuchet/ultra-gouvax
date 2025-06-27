@@ -76,7 +76,7 @@ export default function WelcomeModal() {
 
                 <p className="leading-relaxed">
                   Pour l&apos;encourager, sachez que{" "}
-                  <strong>6 ravitaillements</strong> sont prévus tous les 25 km
+                  <strong>5 ravitaillements</strong> sont prévus tous les 25 km
                   pour recharger les batteries.
                 </p>
 
@@ -94,7 +94,7 @@ export default function WelcomeModal() {
                   </div>
                   <div className="text-center p-3 bg-gray-50 rounded-lg">
                     <div className="text-2xl mb-1">🥤</div>
-                    <div className="font-semibold">6 ravitos</div>
+                    <div className="font-semibold">5 ravitos</div>
                     <div className="text-sm text-gray-600">Tous les 25 km</div>
                   </div>
                   <div className="text-center p-3 bg-gray-50 rounded-lg">
