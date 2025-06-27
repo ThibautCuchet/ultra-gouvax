@@ -5,7 +5,9 @@ create table if not exists waypoints (
   name text,
   lat numeric,
   lng numeric,
-  is_ravito boolean default false
+  is_ravito boolean default false,
+  departure_time timestamptz,
+  eta_initial timestamptz
 );
 
 -- Table storing GPX trackpoints
@@ -14,7 +16,6 @@ create table if not exists trackpoints (
   lat numeric,
   lng numeric,
   elevation numeric,
-  time timestamptz,
   distance_km numeric default 0
 );
 

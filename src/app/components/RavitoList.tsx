@@ -93,6 +93,12 @@ export default function RavitoList({
             validTrackpoints,
             liveTrackData,
           });
+          const departureTime = ravito.departure_time
+            ? format(new Date(ravito.departure_time), "HH:mm")
+            : null;
+          const initialEta = ravito.eta_initial
+            ? format(new Date(ravito.eta_initial), "HH:mm")
+            : null;
           const mapsLink =
             ravito.lat != null && ravito.lng != null
               ? `https://www.google.com/maps/dir/?api=1&destination=${ravito.lat},${ravito.lng}`
@@ -103,7 +109,9 @@ export default function RavitoList({
                 <div className="font-medium">{ravito.name}</div>
                 <div className="text-sm text-muted-foreground">
                   {ravito.km != null && `${ravito.km} km`}
-                  {eta && ` · ETA ${eta}`}
+                  {departureTime && ` · Départ prévu ${departureTime}`}
+                  {initialEta && ` · ETA initial ${initialEta}`}
+                  {eta && ` · ETA live ${eta}`}
                 </div>
               </div>
               {mapsLink && (

@@ -5,9 +5,9 @@ export async function getData() {
   const supabase = await createClient();
 
   const [waypoints, steps, trackpoints, liveTrackConfig] = await Promise.all([
-    supabase.from("waypoints").select("*"),
-    supabase.from("steps").select("*"),
-    supabase.from("trackpoints").select("*"),
+    supabase.from("waypoints").select("*").order("id"),
+    supabase.from("steps").select("*").order("id"),
+    supabase.from("trackpoints").select("*").order("id"),
     getLiveTrackConfig(),
   ]);
 

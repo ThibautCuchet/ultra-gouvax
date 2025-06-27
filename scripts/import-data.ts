@@ -23,20 +23,118 @@ interface StepData {
   estimated_duration_minutes: number;
 }
 
+// Function to calculate distance between two points
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Function to convert time string to full timestamp (Brussels timezone)
+function convertTimeToTimestamp(departureTime: string): string {
+  // Race starts on June 27, 2025 at 19:00 Brussels time (UTC+2 in summer)
+  const raceStartDate = new Date("2025-06-27T17:00:00.000Z"); // 19h Brussels = 17h UTC
+  const [hours, minutes] = departureTime.split(":").map(Number);
+
+  // Create the departure date based on the race start date
+  const departureDate = new Date(raceStartDate);
+
+  // If time is early morning (like 01:30), it's probably the next day
+  if (hours < 12) {
+    departureDate.setDate(departureDate.getDate() + 1);
+  }
+
+  // Set the time in Brussels timezone (convert to UTC)
+  const brusselsHours = hours;
+  const utcHours = brusselsHours - 2; // Brussels is UTC+2 in summer
+  departureDate.setUTCHours(utcHours, minutes, 0, 0);
+
+  return departureDate.toISOString();
+}
+
+// Function to calculate ETA based on distance and average speed
+function calculateEta(startTimestamp: string, waypointKm: number): string {
+  const startDate = new Date(startTimestamp);
+
+  // Vitesse moyenne : 7:45 min/km = 7.75 minutes par km
+  const avgSpeedMinPerKm = 7.75;
+  const estimatedTimeMinutes = waypointKm * avgSpeedMinPerKm;
+
+  // Calculer l'ETA en ajoutant le temps estimé
+  const etaDate = new Date(
+    startDate.getTime() + estimatedTimeMinutes * 60 * 1000
+  );
+
+  return etaDate.toISOString();
+}
+
 async function parseWaypoints(filePath: string): Promise<Waypoint[]> {
   const csvContent = await fs.readFile(filePath, "utf-8");
   const lines = csvContent.trim().split("\n");
+
+  let lastDepartureTimestamp: string | null = null;
+
   return lines.slice(1).map((line, index) => {
     const values = line.split(",");
     const name = values[1];
-    return {
+    const isRavito = name.toLowerCase().includes("ravito");
+    const departureTimeRaw = values[5]?.trim();
+
+    // Logic for departure_time and eta_initial
+    let departureTimestamp: string | null = null;
+    let etaInitial: string | null = null;
+
+    const waypointKm = Number.parseFloat(values[0]);
+
+    if (departureTimeRaw && departureTimeRaw !== "") {
+      // departure_time is defined, use it as base time
+      departureTimestamp = convertTimeToTimestamp(departureTimeRaw);
+      lastDepartureTimestamp = departureTimestamp; // Update last departure time
+    }
+
+    // Calculate ETA initial based on race start time (19h Brussels time) + distance and speed
+    const raceStartTime = "2025-06-27T17:00:00.000Z"; // 19h Brussels = 17h UTC
+    const baseEta = calculateEta(raceStartTime, waypointKm);
+
+    // For ravitos, ETA is arrival time and departure time is calculated
+    if (isRavito) {
+      const etaDate = new Date(baseEta);
+      etaDate.setMinutes(etaDate.getMinutes() - 10);
+      etaInitial = etaDate.toISOString();
+
+      // Calculate departure time for ravitos (arrival + 10 min break)
+      if (!departureTimestamp) {
+        departureTimestamp = baseEta; // baseEta is already arrival + running time
+      }
+    } else {
+      etaInitial = baseEta;
+    }
+
+    const waypoint: Waypoint = {
       id: index,
       km: Number.parseFloat(values[0]),
       name: name.replace(/"/g, ""),
       lat: Number.parseFloat(values[2]),
       lng: Number.parseFloat(values[3]),
-      is_ravito: name.toLowerCase().includes("ravito"),
+      is_ravito: isRavito,
+      departure_time: departureTimestamp,
+      eta_initial: etaInitial,
     };
+
+    return waypoint;
   });
 }
 
@@ -98,25 +196,6 @@ async function parseGPX(
   return trackPoints;
 }
 
-function calculateDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371; // Radius of the Earth in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
 async function importWaypoints() {
   const csvPath = path.join("src", "ressources", "coordonnees.csv");
   const waypoints = await parseWaypoints(csvPath);
@@ -132,21 +211,25 @@ async function importSteps(stepsData: StepData[]) {
   console.log(`Importing ${stepsData.length} steps from CSV...`);
 
   for (const stepData of stepsData) {
-    // Convert time to full timestamp (assuming it's for the race day)
+    // Convert time to full timestamp (race starts June 27, 2025 at 19:00 Brussels time)
     const convertTimeToTimestamp = (
       time: string,
       stepIndex: number
     ): string => {
-      const baseDate = new Date("2025-06-27"); // Race date: 27-28 June 2025
+      const raceStartDate = new Date("2025-06-27T17:00:00.000Z"); // 19h Brussels = 17h UTC
       const [hours, minutes] = time.split(":").map(Number);
+
+      const stepDate = new Date(raceStartDate);
 
       // If time is early morning (like 01:30), it's probably the next day
       if (hours < 12 && stepIndex > 1) {
-        baseDate.setDate(baseDate.getDate() + 1);
+        stepDate.setDate(stepDate.getDate() + 1);
       }
 
-      baseDate.setHours(hours, minutes, 0, 0);
-      return baseDate.toISOString();
+      // Set the time in Brussels timezone (convert to UTC)
+      const utcHours = hours - 2; // Brussels is UTC+2 in summer
+      stepDate.setUTCHours(utcHours, minutes, 0, 0);
+      return stepDate.toISOString();
     };
 
     // Insert step

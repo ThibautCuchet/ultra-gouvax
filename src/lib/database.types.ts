@@ -104,6 +104,8 @@ export type Database = {
           lat: number | null;
           lng: number | null;
           name: string | null;
+          departure_time: string | null;
+          eta_initial: string | null;
         };
         Insert: {
           id?: number;
@@ -112,6 +114,8 @@ export type Database = {
           lat?: number | null;
           lng?: number | null;
           name?: string | null;
+          departure_time?: string | null;
+          eta_initial?: string | null;
         };
         Update: {
           id?: number;
@@ -120,6 +124,8 @@ export type Database = {
           lat?: number | null;
           lng?: number | null;
           name?: string | null;
+          departure_time?: string | null;
+          eta_initial?: string | null;
         };
         Relationships: [];
       };

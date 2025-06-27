@@ -99,6 +99,13 @@ export default function WaypointMarker({
     liveTrackData,
   });
 
+  const departureTime = waypoint.departure_time
+    ? format(new Date(waypoint.departure_time), "HH:mm")
+    : null;
+  const initialEta = waypoint.eta_initial
+    ? format(new Date(waypoint.eta_initial), "HH:mm")
+    : null;
+
   const mapsLink =
     waypoint.lat != null && waypoint.lng != null
       ? `https://www.google.com/maps/dir/?api=1&destination=${waypoint.lat},${waypoint.lng}`
@@ -119,7 +126,11 @@ export default function WaypointMarker({
             <div className="font-semibold">{waypoint.name}</div>
           )}
           {waypoint.km !== null && <div>{waypoint.km} km</div>}
-          {eta && <div>ETA : {eta}</div>}
+          {initialEta && <div>ETA initial : {initialEta}</div>}
+          {waypoint.is_ravito && departureTime && (
+            <div>Départ prévu : {departureTime}</div>
+          )}
+          {eta && <div>ETA live : {eta}</div>}
           {mapsLink && (
             <div className="pt-1 space-y-1">
               <a
@@ -152,7 +163,7 @@ export default function WaypointMarker({
                   )}
                 </button>
                 {copiedWaypointId === waypoint.id && (
-                  <span className="text-green-600 text-xs">Copié !</span>
+                  <span className="text-green-600 text-xs">Copié !</span>
                 )}
               </div>
             </div>
