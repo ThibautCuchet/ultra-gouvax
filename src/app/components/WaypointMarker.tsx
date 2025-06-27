@@ -101,7 +101,7 @@ export default function WaypointMarker({
 
   const mapsLink =
     waypoint.lat != null && waypoint.lng != null
-      ? `geo:${waypoint.lat},${waypoint.lng}`
+      ? `https://www.google.com/maps/dir/?api=1&destination=${waypoint.lat},${waypoint.lng}`
       : null;
 
   return (
