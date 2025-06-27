@@ -6,11 +6,24 @@ import {
   Trackpoint,
   Waypoint,
 } from "@/lib/database.types";
-import UltraMap from "./components/UltaMap";
+import dynamic from "next/dynamic";
+
+const UltraMap = dynamic(() => import("./components/UltaMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className="text-center">
+        <div className="text-2xl mb-2">🗺️</div>
+        <div className="text-gray-600">Chargement de la carte...</div>
+      </div>
+    </div>
+  ),
+});
 import UltraStats from "./components/UltraStats";
 import LiveStats from "./components/LiveStats";
 import RavitoList from "./components/RavitoList";
 import CountdownTimer from "./components/CountdownTimer";
+import WelcomeModal from "./components/WelcomeModal";
 import { useLiveTrack } from "@/lib/useLiveTrack";
 import { useEffect, useMemo, useState } from "react";
 import { findClosestTrackPoint, calculateProgress } from "@/lib/calculate";
@@ -70,6 +83,7 @@ export default function HomeClient({
 
   return (
     <div className="min-h-screen bg-background">
+      <WelcomeModal />
       <div className="container mx-auto px-4 py-8 space-y-8">
         <header className="text-center">
           <h1 className="text-4xl font-bold text-primary mb-2">
